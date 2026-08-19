@@ -30,11 +30,9 @@ Como o conteúdo é de lógica **proposicional**, uma frase completa é tratada 
 
 ## Link da apresentação
 
-**Aplicação publicada:** https://logiq-calculadora-proposicional-2026.mario-gmm06.chatgpt.site
+**Apresentação — GitHub Pages:** https://mariomont30.github.io/Calculadora-Logica_de_Preposicoes/
 
-**GitHub Pages:** https://mariomont30.github.io/Calculadora-Logica-AV1/
-
-**Código-fonte:** https://github.com/mariomont30/Calculadora-Logica-AV1
+**Código-fonte:** https://github.com/mariomont30/Calculadora-Logica_de_Preposicoes
 
 Antes da apresentação, use o botão **Equipe** para inserir os nomes dos integrantes e a disciplina. Essas informações ficam salvas no navegador utilizado para apresentar.
 
