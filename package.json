@@ -1,0 +1,15 @@
+{
+  "name": "logiq-calculadora-proposicional",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Analisador léxico, sintático e provador de tautologias por Tableaux.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^7.1.3"
+  }
+}
