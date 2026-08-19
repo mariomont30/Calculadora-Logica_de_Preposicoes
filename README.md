@@ -62,3 +62,23 @@ O programa usa Tableaux semântico assinado. Para testar se uma fórmula `φ` é
 - `app.js`: analisadores, avaliador, Tableaux e interações da interface.
 
 Todo o processamento ocorre localmente no navegador e nenhum dado é enviado para servidores externos.
+
+## Testes automatizados
+
+A entrega inclui uma suíte reproduzível, sem dependências externas. Para executá-la:
+
+```bash
+npm test
+```
+
+A suíte valida:
+
+- 2.017 fórmulas proposicionais e 29.078 asserções lógicas;
+- combinações exaustivas de negação, conjunção, disjunção, condicional e bicondicional;
+- fórmulas aleatórias profundas com semente determinística;
+- equivalência entre Tableaux, tabela-verdade e um avaliador de referência independente;
+- validade de todos os contraexemplos produzidos;
+- aliases, precedência, associatividade e mensagens de erro;
+- fórmulas com até oito proposições e 256 interpretações;
+- integridade da interface, acessibilidade, responsividade e segurança da renderização;
+- build de produção, rotas, tipos MIME, requisições HEAD, página 404 e cabeçalhos de segurança.

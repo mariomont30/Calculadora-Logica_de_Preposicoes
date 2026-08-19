@@ -5,6 +5,10 @@
   "description": "Analisador léxico, sintático e provador de tautologias por Tableaux.",
   "type": "module",
   "scripts": {
-    "build": "node build.mjs"
+    "build": "node build.mjs",
+    "test:logic": "node tests/comprehensive.mjs",
+    "test:ui": "node tests/ui-structure.mjs",
+    "test:server": "node tests/server.mjs",
+    "test": "npm run test:logic && npm run test:ui && npm run build && npm run test:server"
   }
 }
