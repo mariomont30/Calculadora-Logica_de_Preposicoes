@@ -8,6 +8,12 @@ Aplicação web desenvolvida para a atividade AV1 de Lógica Proposicional. O pr
 
 Além do método principal, a aplicação gera uma tabela-verdade completa para conferência, classifica fórmulas como tautologia, contradição ou contingência e apresenta um contraexemplo quando a fórmula não é tautológica.
 
+## Link da apresentação
+
+**Aplicação publicada:** https://logiq-calculadora-proposicional-2026.mario-gmm06.chatgpt.site
+
+Antes da apresentação, use o botão **Configurar equipe** para inserir os nomes dos integrantes, o curso e a disciplina. Essas informações ficam salvas no navegador utilizado para apresentar.
+
 ## Como executar
 
 Não é necessário instalar dependências. Abra `index.html` em um navegador moderno.
