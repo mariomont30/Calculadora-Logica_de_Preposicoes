@@ -12,6 +12,10 @@ Além do método principal, a aplicação gera uma tabela-verdade completa para 
 
 **Aplicação publicada:** https://logiq-calculadora-proposicional-2026.mario-gmm06.chatgpt.site
 
+**GitHub Pages:** https://mariomont30.github.io/Calculadora-Logica-AV1/
+
+**Código-fonte:** https://github.com/mariomont30/Calculadora-Logica-AV1
+
 Antes da apresentação, use o botão **Configurar equipe** para inserir os nomes dos integrantes, o curso e a disciplina. Essas informações ficam salvas no navegador utilizado para apresentar.
 
 ## Como executar
