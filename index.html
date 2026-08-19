@@ -3,400 +3,233 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="LogiQ — analisador léxico, sintático e provador de tautologias por Tableaux para lógica proposicional."
-    />
-    <meta name="theme-color" content="#07111f" />
-    <title>LogiQ — Provador de Lógica Proposicional</title>
+    <meta name="description" content="Calculadora de lógica proposicional com premissas, conclusão, análise léxica, FBF, Tableaux e tabela-verdade." />
+    <meta name="theme-color" content="#071521" />
+    <title>LogiQ — Calculadora de Lógica Proposicional</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="ambient ambient-one" aria-hidden="true"></div>
-    <div class="ambient ambient-two" aria-hidden="true"></div>
+    <div class="background-grid" aria-hidden="true"></div>
+    <div class="glow glow-one" aria-hidden="true"></div>
+    <div class="glow glow-two" aria-hidden="true"></div>
 
-    <header class="site-header">
-      <a class="brand" href="#inicio" aria-label="LogiQ — início">
-        <span class="brand-mark" aria-hidden="true">
-          <span></span><span></span><span></span>
-        </span>
-        <span class="brand-copy">
-          <strong>LogiQ</strong>
-          <small>propositional prover</small>
-        </span>
+    <header class="topbar">
+      <a class="brand" href="#calculadora" aria-label="LogiQ — Calculadora Lógica">
+        <span class="brand-symbol" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span><strong>LogiQ</strong><small>calculadora proposicional</small></span>
       </a>
-
-      <nav class="desktop-nav" aria-label="Navegação principal">
-        <a href="#laboratorio">Laboratório</a>
-        <a href="#metodo">Método</a>
-        <a href="#regras">Regras</a>
-        <a href="#equipe">Equipe</a>
-      </nav>
-
-      <div class="header-actions">
+      <div class="topbar-actions">
+        <span class="online-badge"><i></i> tudo funciona no navegador</span>
         <button class="icon-button" id="themeButton" type="button" aria-label="Alternar tema" title="Alternar tema">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.64 5.64l1.42 1.42m9.88 9.88 1.42 1.42m0-12.72-1.42 1.42M7.06 16.94l-1.42 1.42M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"/></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4m0-12.8L17 7M7 17l-1.4 1.4M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" /></svg>
         </button>
-        <button class="button button-ghost button-small" id="settingsButton" type="button">
-          Configurar equipe
-        </button>
+        <button class="compact-button" id="teamButton" type="button">Equipe</button>
       </div>
     </header>
 
-    <main>
-      <section class="hero section-shell" id="inicio">
-        <div class="hero-copy reveal">
-          <div class="eyebrow"><span></span> Projeto AV1 · Unidade I</div>
-          <h1>Da fórmula ao veredito, <em>passo a passo.</em></h1>
-          <p>
-            Um laboratório didático que reconhece símbolos, valida fórmulas bem
-            formuladas e demonstra tautologias com o método de Tableaux.
-          </p>
-          <div class="hero-actions">
-            <a class="button button-primary" href="#laboratorio">
-              Testar uma fórmula
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
-            </a>
-            <button class="button button-ghost" id="presentationButton" type="button">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H4zM8 21l4-5 4 5M2 3h20" /></svg>
-              Modo apresentação
-            </button>
-          </div>
-          <div class="hero-proof" aria-label="Recursos do projeto">
-            <span><i>01</i> Léxico</span>
-            <span><i>02</i> Sintaxe</span>
-            <span><i>03</i> Tableaux</span>
-          </div>
+    <main class="page-shell" id="calculadora">
+      <section class="intro">
+        <div class="intro-badge">AV1 · Lógica proposicional</div>
+        <h1>Teste fórmulas e <em>argumentos</em> sem complicação.</h1>
+        <p>Digite as premissas, informe a conclusão e acompanhe a validação por Tableaux e tabela-verdade.</p>
+      </section>
+
+      <section class="calculator-card" aria-label="Calculadora lógica">
+        <div class="mode-tabs" role="tablist" aria-label="Modo da calculadora">
+          <button class="mode-tab active" id="argumentModeButton" type="button" role="tab" aria-selected="true" data-mode="argument">
+            <span class="mode-icon">∴</span><span><strong>Argumento</strong><small>premissas + conclusão</small></span>
+          </button>
+          <button class="mode-tab" id="formulaModeButton" type="button" role="tab" aria-selected="false" data-mode="formula">
+            <span class="mode-icon">ƒ</span><span><strong>Fórmula</strong><small>expressão simbólica</small></span>
+          </button>
         </div>
 
-        <div class="hero-visual reveal reveal-delay" aria-label="Demonstração visual de um Tableaux fechado">
-          <div class="logic-orbit orbit-one"><span>P</span></div>
-          <div class="logic-orbit orbit-two"><span>Q</span></div>
-          <div class="proof-card glass-card">
-            <div class="proof-card-header">
-              <span class="window-dots"><i></i><i></i><i></i></span>
-              <span>prova.tableaux</span>
-              <span class="live-dot">ao vivo</span>
+        <div class="calculator-body">
+          <section id="argumentPanel" class="mode-panel" aria-labelledby="argumentModeButton">
+            <div class="input-style-switch" role="group" aria-label="Forma de entrada do argumento">
+              <button class="active" type="button" data-argument-input="fields">Campos separados</button>
+              <button type="button" data-argument-input="text">Texto corrido</button>
             </div>
-            <div class="proof-expression">(P → Q) ↔ (¬Q → ¬P)</div>
-            <div class="proof-status"><span>✓</span> Tautologia demonstrada</div>
-            <div class="mini-tree" aria-hidden="true">
-              <div class="tree-root">F [(P → Q) ↔ (¬Q → ¬P)]</div>
-              <div class="tree-line"></div>
-              <div class="tree-branches">
-                <div><span>T (P → Q)</span><span>F (¬Q → ¬P)</span><b>×</b></div>
-                <div><span>F (P → Q)</span><span>T (¬Q → ¬P)</span><b>×</b></div>
+
+            <div id="argumentFieldsPanel">
+              <div class="section-label">
+                <div><span>1</span><strong>Informe as premissas</strong></div>
+                <small>Você pode usar fórmulas ou frases</small>
               </div>
+              <div class="premise-list" id="premiseList"></div>
+              <button class="add-premise" id="addPremiseButton" type="button">
+                <span>+</span> Adicionar outra premissa
+              </button>
+
+              <div class="conclusion-divider"><span>logo</span></div>
+
+              <div class="section-label">
+                <div><span>2</span><strong>Informe a conclusão</strong></div>
+                <small>O que deve decorrer das premissas?</small>
+              </div>
+              <label class="logic-field conclusion-field">
+                <span class="field-prefix">∴</span>
+                <input id="conclusionInput" type="text" value="Sou aprovado" placeholder="Ex.: Sou aprovado ou Q" autocomplete="off" />
+              </label>
             </div>
-            <div class="proof-footer"><span>2 ramos</span><strong>todos fechados</strong></div>
-          </div>
+
+            <div id="argumentTextPanel" hidden>
+              <div class="section-label">
+                <div><span>1</span><strong>Cole ou escreva o argumento</strong></div>
+                <small>Separe as premissas com ponto e introduza a conclusão com “logo”</small>
+              </div>
+              <label class="text-argument-field">
+                <textarea id="argumentTextInput" rows="5" spellcheck="true" aria-label="Argumento em texto corrido" placeholder="Se estudo, então sou aprovado. Estudo. Logo, sou aprovado.">Se estudo, então sou aprovado. Estudo. Logo, sou aprovado.</textarea>
+              </label>
+              <div class="accepted-conclusions"><strong>Conectivos de conclusão:</strong><span>logo</span><span>portanto</span><span>assim</span><span>conclusão:</span><span>∴</span></div>
+              <div class="parsed-preview" id="parsedPreview" aria-live="polite"></div>
+            </div>
+
+            <div class="quick-examples">
+              <span>Exemplos:</span>
+              <button type="button" data-argument-example="modus">Modus ponens</button>
+              <button type="button" data-argument-example="invalid">Argumento inválido</button>
+              <button type="button" data-argument-example="socrates">Frases simples</button>
+            </div>
+          </section>
+
+          <section id="formulaPanel" class="mode-panel" aria-labelledby="formulaModeButton" hidden>
+            <div class="section-label">
+              <div><span>ƒ</span><strong>Digite a fórmula</strong></div>
+              <small>Use letras de A a Z como proposições</small>
+            </div>
+            <label class="formula-editor">
+              <textarea id="formulaInput" rows="3" spellcheck="false" autocomplete="off" aria-label="Fórmula proposicional">(P → Q) ↔ (¬Q → ¬P)</textarea>
+            </label>
+            <div class="operator-keypad" aria-label="Inserir conectivo">
+              <button type="button" data-insert="¬" title="Negação"><strong>¬</strong><small>não</small></button>
+              <button type="button" data-insert=" ∧ " title="Conjunção"><strong>∧</strong><small>e</small></button>
+              <button type="button" data-insert=" ∨ " title="Disjunção"><strong>∨</strong><small>ou</small></button>
+              <button type="button" data-insert=" → " title="Condicional"><strong>→</strong><small>se... então</small></button>
+              <button type="button" data-insert=" ↔ " title="Bicondicional"><strong>↔</strong><small>se e somente se</small></button>
+              <button type="button" data-insert="(" title="Abrir parêntese"><strong>(</strong><small>abrir</small></button>
+              <button type="button" data-insert=")" title="Fechar parêntese"><strong>)</strong><small>fechar</small></button>
+            </div>
+            <div class="quick-examples">
+              <span>Exemplos:</span>
+              <button type="button" data-formula-example="P ∨ ¬P">Tautologia</button>
+              <button type="button" data-formula-example="P ∧ ¬P">Contradição</button>
+              <button type="button" data-formula-example="P → Q">Contingência</button>
+            </div>
+          </section>
+
+          <div class="live-message" id="inputMessage" aria-live="polite"><span></span> Pronto para analisar.</div>
+
+          <button class="primary-action" id="analyzeButton" type="button">
+            <span class="action-default"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg><b id="analyzeButtonLabel">Verificar validade do argumento</b></span>
+            <span class="action-loading"><i></i> Analisando passo a passo...</span>
+          </button>
+
+          <details class="help-details">
+            <summary>Como escrever fórmulas e frases?</summary>
+            <div class="help-grid">
+              <div><kbd>¬</kbd><span><strong>Negação</strong><small>“não”, ~ ou !</small></span></div>
+              <div><kbd>∧</kbd><span><strong>Conjunção</strong><small>“e”, ^ ou &amp;</small></span></div>
+              <div><kbd>∨</kbd><span><strong>Disjunção</strong><small>“ou”, v ou |</small></span></div>
+              <div><kbd>→</kbd><span><strong>Condicional</strong><small>“se..., então...” ou -&gt;</small></span></div>
+              <div><kbd>↔</kbd><span><strong>Bicondicional</strong><small>“se e somente se” ou &lt;-&gt;</small></span></div>
+            </div>
+          </details>
         </div>
       </section>
 
-      <section class="stage-strip" aria-label="Etapas do analisador">
-        <div class="section-shell stage-grid">
-          <article><span>Etapa I</span><strong>Análise léxica</strong><small>símbolos e proposições</small></article>
-          <article><span>Etapa II</span><strong>Análise sintática</strong><small>estrutura de uma FBF</small></article>
-          <article><span>Etapa III</span><strong>Prova semântica</strong><small>Tableaux e contraexemplo</small></article>
-        </div>
-      </section>
-
-      <section class="lab-section section-shell" id="laboratorio">
-        <div class="section-heading reveal">
-          <div>
-            <div class="eyebrow"><span></span> Laboratório interativo</div>
-            <h2>Teste qualquer fórmula proposicional</h2>
-          </div>
-          <p>Insira uma expressão ou escolha um exemplo. A análise acontece integralmente no navegador.</p>
+      <section class="results-shell" id="results" hidden aria-live="polite">
+        <div class="analysis-pipeline" id="pipeline">
+          <div data-stage="lexical"><span>1</span><p><strong>Léxico</strong><small>Aguardando</small></p></div><i></i>
+          <div data-stage="syntax"><span>2</span><p><strong>FBF</strong><small>Aguardando</small></p></div><i></i>
+          <div data-stage="tableau"><span>3</span><p><strong>Tableaux</strong><small>Aguardando</small></p></div>
         </div>
 
-        <div class="lab-layout">
-          <aside class="syntax-card panel reveal">
-            <div class="panel-kicker">Sintaxe aceita</div>
-            <h3>Operadores</h3>
-            <div class="operator-guide">
-              <div><kbd>¬</kbd><span><strong>Negação</strong><small>~ ou !</small></span></div>
-              <div><kbd>∧</kbd><span><strong>Conjunção</strong><small>^ ou &amp;</small></span></div>
-              <div><kbd>∨</kbd><span><strong>Disjunção</strong><small>v ou |</small></span></div>
-              <div><kbd>→</kbd><span><strong>Condicional</strong><small>-&gt;</small></span></div>
-              <div><kbd>↔</kbd><span><strong>Bicondicional</strong><small>&lt;-&gt;</small></span></div>
-            </div>
-            <div class="syntax-note">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v4m0 4h.01M10.3 3.7 2.7 17a2 2 0 0 0 1.74 3h15.12a2 2 0 0 0 1.74-3L13.7 3.7a2 2 0 0 0-3.4 0Z" /></svg>
-              <p>Use letras de <strong>A a Z</strong> como proposições. A precedência é: ¬, ∧, ∨, →, ↔.</p>
-            </div>
-          </aside>
-
-          <div class="calculator panel reveal reveal-delay">
-            <div class="calculator-topline">
-              <div>
-                <span class="panel-kicker">Entrada da fórmula</span>
-                <span class="keyboard-tip">Ctrl + Enter para analisar</span>
-              </div>
-              <button class="text-button" id="clearButton" type="button">Limpar</button>
-            </div>
-
-            <label class="sr-only" for="formulaInput">Fórmula proposicional</label>
-            <div class="formula-field" id="formulaField">
-              <textarea id="formulaInput" rows="2" spellcheck="false" autocomplete="off" aria-describedby="inputHelp">(P → Q) ↔ (¬Q → ¬P)</textarea>
-              <span class="formula-caret" aria-hidden="true">ƒ</span>
-            </div>
-            <div class="input-message" id="inputHelp" aria-live="polite">A fórmula será validada antes de iniciar a prova.</div>
-
-            <div class="operator-pad" aria-label="Inserir operador">
-              <button type="button" data-insert="¬" title="Negação">¬</button>
-              <button type="button" data-insert=" ∧ " title="Conjunção">∧</button>
-              <button type="button" data-insert=" ∨ " title="Disjunção">∨</button>
-              <button type="button" data-insert=" → " title="Condicional">→</button>
-              <button type="button" data-insert=" ↔ " title="Bicondicional">↔</button>
-              <button type="button" data-insert="(" title="Abrir parêntese">(</button>
-              <button type="button" data-insert=")" title="Fechar parêntese">)</button>
-            </div>
-
-            <div class="example-row">
-              <span>Experimente:</span>
-              <button type="button" data-example="P ∧ Q">Conjunção</button>
-              <button type="button" data-example="P ∨ ¬P">Terceiro excluído</button>
-              <button type="button" data-example="((P → Q) ∧ P) → Q">Modus ponens</button>
-              <button type="button" data-example="P ∧ ¬P">Contradição</button>
-            </div>
-
-            <button class="analyze-button" id="analyzeButton" type="button">
-              <span class="button-label">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
-                Analisar fórmula
-              </span>
-              <span class="button-loading"><i></i> Construindo a prova...</span>
-            </button>
-          </div>
+        <div class="analysis-error" id="errorPanel" hidden>
+          <span class="error-symbol">!</span>
+          <div><small id="errorStage">Análise interrompida</small><h2 id="errorTitle">Revise a entrada</h2><p id="errorMessage"></p><pre id="errorPointer"></pre></div>
         </div>
 
-        <section class="results" id="results" aria-live="polite" hidden>
-          <div class="pipeline panel" id="pipeline">
-            <div class="pipeline-step" data-pipeline="lexical"><span>1</span><div><strong>Léxico</strong><small>Aguardando</small></div><i></i></div>
-            <div class="pipeline-connector"></div>
-            <div class="pipeline-step" data-pipeline="syntax"><span>2</span><div><strong>Sintaxe</strong><small>Aguardando</small></div><i></i></div>
-            <div class="pipeline-connector"></div>
-            <div class="pipeline-step" data-pipeline="tableau"><span>3</span><div><strong>Tableaux</strong><small>Aguardando</small></div><i></i></div>
+        <div id="successResults" hidden>
+          <article class="result-hero" id="resultHero">
+            <div class="result-symbol" id="resultSymbol">✓</div>
+            <div class="result-copy"><small id="resultKicker">Resultado do argumento</small><h2 id="resultTitle">Argumento válido</h2><p id="resultDescription"></p></div>
+            <div class="result-formula"><small>Fórmula testada</small><code id="resultFormula"></code></div>
+            <div class="result-actions"><button id="copyResultButton" type="button">Copiar resumo</button><button id="printResultButton" type="button">Imprimir</button></div>
+          </article>
+
+          <div class="plain-explanation">
+            <span>Em palavras simples</span>
+            <p id="plainExplanation"></p>
           </div>
 
-          <div class="error-panel panel" id="errorPanel" hidden>
-            <div class="error-icon">!</div>
-            <div><span id="errorStage">Análise interrompida</span><h3 id="errorTitle">Revise a fórmula</h3><p id="errorMessage"></p><code id="errorPointer"></code></div>
+          <section class="argument-reading" id="argumentReading">
+            <div class="argument-flow" id="argumentFlow"></div>
+            <div class="proposition-legend" id="propositionLegend"></div>
+          </section>
+
+          <section class="countermodel" id="countermodel" hidden>
+            <div><span>!</span><p><strong>Contraexemplo</strong><small>Estes valores tornam as premissas verdadeiras e a conclusão falsa.</small></p></div>
+            <div id="countermodelValues"></div>
+          </section>
+
+          <div class="result-tabs" role="tablist" aria-label="Detalhes da análise">
+            <button class="active" type="button" role="tab" aria-selected="true" data-result-tab="summary">Resumo</button>
+            <button type="button" role="tab" aria-selected="false" data-result-tab="tableau">Tableaux</button>
+            <button type="button" role="tab" aria-selected="false" data-result-tab="truth">Tabela-verdade</button>
+            <button type="button" role="tab" aria-selected="false" data-result-tab="structure">Léxico e FBF</button>
           </div>
 
-          <div id="successResults" hidden>
-            <article class="verdict panel" id="verdictCard">
-              <div class="verdict-icon" id="verdictIcon">✓</div>
-              <div class="verdict-copy">
-                <span class="panel-kicker">Veredito lógico</span>
-                <h3 id="verdictTitle">Tautologia</h3>
-                <p id="verdictDescription"></p>
-              </div>
-              <div class="verdict-formula">
-                <small>Fórmula normalizada</small>
-                <strong id="normalizedFormula"></strong>
-              </div>
-              <div class="metric"><strong id="variableCount">0</strong><span>proposições</span></div>
-              <div class="metric"><strong id="branchCount">0</strong><span>ramos finais</span></div>
-              <div class="metric"><strong id="closedCount">0</strong><span>ramos fechados</span></div>
-            </article>
-
-            <div class="result-commandbar">
-              <div class="result-ready"><span></span><strong>Análise concluída</strong><small>Todos os dados abaixo pertencem à mesma prova</small></div>
-              <div class="result-actions">
-                <button type="button" id="copyResultButton">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8h11v11H8zM5 16H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v1" /></svg>
-                  Copiar resumo
-                </button>
-                <button type="button" id="printResultButton">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v7H6z" /></svg>
-                  Imprimir prova
-                </button>
-              </div>
-            </div>
-
-            <section class="interpretation panel" id="interpretationPanel">
-              <div class="interpretation-intro">
-                <span class="interpretation-icon">i</span>
-                <div><span class="panel-kicker">Leitura guiada</span><h3 id="insightTitle">Como interpretar este resultado?</h3><p id="insightText"></p></div>
-              </div>
-              <div class="logic-journey" aria-label="Caminho até a conclusão">
-                <article>
-                  <span class="journey-number">1</span>
-                  <small>Pergunta</small>
-                  <strong>É tautologia?</strong>
-                  <b id="tautologyAnswer">Sim</b>
-                </article>
-                <i aria-hidden="true">→</i>
-                <article>
-                  <span class="journey-number">2</span>
-                  <small>Prova por Tableaux</small>
-                  <strong id="tableauReading">Todos os ramos fecharam</strong>
-                  <b id="ruleCountReading">0 regras aplicadas</b>
-                </article>
-                <i aria-hidden="true">→</i>
-                <article>
-                  <span class="journey-number">3</span>
-                  <small>Conferência</small>
-                  <strong id="truthReading">Todas as linhas são V</strong>
-                  <b id="valuationReading">0 interpretações</b>
-                </article>
-                <i aria-hidden="true">→</i>
-                <article class="journey-conclusion" id="journeyConclusion">
-                  <span class="journey-symbol" id="journeySymbol">✓</span>
-                  <small>Conclusão</small>
-                  <strong id="journeyTitle">Tautologia</strong>
-                  <b id="journeyDetail">Prova concluída</b>
-                </article>
+          <div class="result-detail-card">
+            <section class="result-tab-panel" id="result-tab-summary">
+              <div class="summary-grid">
+                <article><small>Classificação</small><strong id="summaryClassification"></strong><p id="summaryClassificationHelp"></p></article>
+                <article><small>Tableaux</small><strong id="summaryBranches"></strong><p id="summaryBranchesHelp"></p></article>
+                <article><small>Tabela-verdade</small><strong id="summaryRows"></strong><p id="summaryRowsHelp"></p></article>
+                <article><small>Proposições</small><strong id="summaryVariables"></strong><p>Quantidade de variáveis diferentes.</p></article>
               </div>
             </section>
 
-            <div class="counterexample panel" id="counterexample" hidden>
-              <div class="counterexample-copy"><i>!</i><div><span>Contraexemplo encontrado</span><p>Com esta interpretação, a fórmula assume valor <strong>falso</strong>:</p></div></div>
-              <div class="assignment-list" id="assignmentList"></div>
-            </div>
+            <section class="result-tab-panel" id="result-tab-tableau" hidden>
+              <div class="detail-heading"><div><small>Prova por refutação</small><h3>Desenvolvimento do Tableaux</h3></div><p>O teste começa supondo falsa a fórmula de validade.</p></div>
+              <div class="tableau-legend"><span><b>T</b> verdadeiro</span><span><b>F</b> falso</span><span><b>×</b> fechado</span><span><b>○</b> aberto</span></div>
+              <div class="tableau-start" id="tableauStart"></div>
+              <div class="tableau-steps" id="tableauSteps"></div>
+              <div class="branch-grid" id="branchGrid"></div>
+            </section>
 
-            <div class="result-workspace panel">
-              <div class="tab-list" role="tablist" aria-label="Resultados da análise">
-                <button class="tab-button active" id="tab-tableau" role="tab" aria-selected="true" aria-controls="panel-tableau" data-tab="tableau"><span>Ψ</span> Tableaux <small>prova</small></button>
-                <button class="tab-button" id="tab-truth" role="tab" aria-selected="false" aria-controls="panel-truth" data-tab="truth"><span>⊞</span> Tabela-verdade <small>conferência</small></button>
-                <button class="tab-button" id="tab-lexical" role="tab" aria-selected="false" aria-controls="panel-lexical" data-tab="lexical"><span>Aa</span> Análise léxica <small>símbolos</small></button>
-                <button class="tab-button" id="tab-syntax" role="tab" aria-selected="false" aria-controls="panel-syntax" data-tab="syntax"><span>⌘</span> Árvore sintática <small>estrutura</small></button>
+            <section class="result-tab-panel" id="result-tab-truth" hidden>
+              <div class="detail-heading"><div><small>Conferência semântica</small><h3>Tabela-verdade</h3></div><div class="truth-actions"><p id="truthSummary"></p><button id="truthFilterButton" type="button">Mostrar somente falsas</button></div></div>
+              <div class="table-wrap"><table id="truthTable"></table></div>
+            </section>
+
+            <section class="result-tab-panel" id="result-tab-structure" hidden>
+              <div class="structure-grid">
+                <div><div class="detail-heading"><div><small>Etapa I</small><h3>Tokens reconhecidos</h3></div></div><div class="token-stream" id="tokenStream"></div></div>
+                <div><div class="detail-heading"><div><small>Etapa II</small><h3>Árvore da FBF</h3></div></div><div class="ast-wrap" id="astTree"></div></div>
               </div>
-
-              <div class="tab-panel active" id="panel-tableau" role="tabpanel" aria-labelledby="tab-tableau">
-                <div class="result-panel-heading">
-                  <div><span class="panel-kicker">Prova por refutação</span><h3>Desenvolvimento do Tableaux</h3></div>
-                  <p>Começamos supondo que a fórmula seja falsa. Ela é tautológica somente se todos os ramos fecharem.</p>
-                </div>
-                <div class="tableau-legend" aria-label="Legenda do Tableaux">
-                  <span><b class="legend-true">T</b> fórmula verdadeira</span>
-                  <span><b class="legend-false">F</b> fórmula falsa</span>
-                  <span><b class="legend-closed">×</b> ramo fechado</span>
-                  <span><b class="legend-open">○</b> ramo aberto</span>
-                  <span class="legend-tip">α continua no ramo · β cria alternativas</span>
-                </div>
-                <div class="tableau-start" id="tableauStart"></div>
-                <div class="subsection-label"><span>Expansão das fórmulas</span><small id="stepCountLabel"></small></div>
-                <div class="tableau-steps" id="tableauSteps"></div>
-                <div class="subsection-label"><span>Estado final dos ramos</span><small>Um ramo fecha quando contém T e F para a mesma proposição</small></div>
-                <div class="branch-grid" id="branchGrid"></div>
-              </div>
-
-              <div class="tab-panel" id="panel-truth" role="tabpanel" aria-labelledby="tab-truth" hidden>
-                <div class="result-panel-heading">
-                  <div><span class="panel-kicker">Verificação complementar</span><h3>Tabela-verdade completa</h3></div>
-                  <div class="truth-heading-actions"><p id="truthSummary"></p><button type="button" id="truthFilterButton">Mostrar somente falsas</button></div>
-                </div>
-                <div class="truth-legend"><span><i class="truth-dot true"></i> V = verdadeiro</span><span><i class="truth-dot false"></i> F = falso</span><small>A última coluna apresenta o valor da fórmula completa.</small></div>
-                <div class="table-wrap"><table id="truthTable"></table></div>
-              </div>
-
-              <div class="tab-panel" id="panel-lexical" role="tabpanel" aria-labelledby="tab-lexical" hidden>
-                <div class="result-panel-heading">
-                  <div><span class="panel-kicker">Etapa I</span><h3>Tokens reconhecidos</h3></div>
-                  <p id="tokenSummary">Cada símbolo foi convertido em uma unidade com significado para o analisador.</p>
-                </div>
-                <div class="token-stream" id="tokenStream"></div>
-              </div>
-
-              <div class="tab-panel" id="panel-syntax" role="tabpanel" aria-labelledby="tab-syntax" hidden>
-                <div class="result-panel-heading">
-                  <div><span class="panel-kicker">Etapa II</span><h3>Estrutura da FBF</h3></div>
-                  <p id="syntaxSummary">A árvore mostra como os operadores conectam as subfórmulas respeitando a precedência.</p>
-                </div>
-                <div class="ast-wrap" id="astTree"></div>
-              </div>
-            </div>
-          </div>
-        </section>
-      </section>
-
-      <section class="method-section" id="metodo">
-        <div class="section-shell">
-          <div class="section-heading reveal">
-            <div><div class="eyebrow"><span></span> Como funciona</div><h2>Três verificações, uma conclusão confiável</h2></div>
-            <p>O fluxo separa responsabilidades, facilitando a identificação de erros e a explicação durante a apresentação.</p>
-          </div>
-          <div class="method-grid">
-            <article class="method-card reveal"><span class="method-number">01</span><div class="method-icon">Aa</div><h3>Analisador léxico</h3><p>Lê a entrada caractere por caractere e reconhece proposições, conectivos e parênteses.</p><ul><li>Normaliza símbolos equivalentes</li><li>Informa a posição de caracteres inválidos</li></ul></article>
-            <article class="method-card reveal reveal-delay"><span class="method-number">02</span><div class="method-icon">( )</div><h3>Analisador sintático</h3><p>Aplica uma gramática com precedência para decidir se a expressão é uma fórmula bem formulada.</p><ul><li>Valida operandos e operadores</li><li>Constrói a árvore sintática</li></ul></article>
-            <article class="method-card reveal reveal-delay-2"><span class="method-number">03</span><div class="method-icon">Ψ</div><h3>Provador Tableaux</h3><p>Testa a negação da fórmula por regras semânticas e acompanha cada ramo até seu fechamento.</p><ul><li>Todos fechados: tautologia</li><li>Ramo aberto: contraexemplo</li></ul></article>
+            </section>
           </div>
         </div>
       </section>
 
-      <section class="rules-section section-shell" id="regras">
-        <div class="section-heading reveal">
-          <div><div class="eyebrow"><span></span> Base teórica</div><h2>Regras ensinadas ao provador</h2></div>
-          <p>Regras α preservam o mesmo ramo; regras β criam alternativas. T e F indicam o valor assumido da subfórmula.</p>
-        </div>
-        <div class="rules-layout">
-          <article class="rule-group alpha reveal">
-            <div class="rule-group-header"><span>α</span><div><h3>Regras lineares</h3><p>As duas consequências permanecem juntas.</p></div></div>
-            <div class="rule-list">
-              <div><strong>T (A ∧ B)</strong><span>TA, TB</span></div>
-              <div><strong>F (A ∨ B)</strong><span>FA, FB</span></div>
-              <div><strong>F (A → B)</strong><span>TA, FB</span></div>
-              <div><strong>T ¬A / F ¬A</strong><span>FA / TA</span></div>
-            </div>
-          </article>
-          <article class="rule-group beta reveal reveal-delay">
-            <div class="rule-group-header"><span>β</span><div><h3>Regras ramificadas</h3><p>Cada alternativa segue em um ramo.</p></div></div>
-            <div class="rule-list">
-              <div><strong>F (A ∧ B)</strong><span>FA │ FB</span></div>
-              <div><strong>T (A ∨ B)</strong><span>TA │ TB</span></div>
-              <div><strong>T (A → B)</strong><span>FA │ TB</span></div>
-              <div><strong>T / F (A ↔ B)</strong><span>casos concordantes / discordantes</span></div>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <section class="team-section" id="equipe">
-        <div class="section-shell team-layout">
-          <div class="team-copy reveal">
-            <div class="eyebrow"><span></span> Créditos do projeto</div>
-            <h2 id="projectTitleDisplay">Provador de Fórmulas Proposicionais</h2>
-            <p id="courseDisplay">Trabalho desenvolvido para a avaliação AV1 — Unidade I.</p>
-            <button class="button button-ghost" id="teamEditButton" type="button">Editar informações</button>
-          </div>
-          <div class="team-board panel reveal reveal-delay">
-            <div class="team-board-header"><span>Equipe responsável</span><small>3–5 integrantes</small></div>
-            <div class="member-list" id="memberList"></div>
-          </div>
-        </div>
-      </section>
+      <footer class="page-footer">
+        <p><strong>LogiQ</strong> · Projeto acadêmico de Lógica Proposicional</p>
+        <span>Análise léxica · FBF · Tableaux · Tabela-verdade</span>
+      </footer>
     </main>
 
-    <footer class="site-footer">
-      <div class="section-shell">
-        <a class="brand footer-brand" href="#inicio"><span class="brand-mark"><span></span><span></span><span></span></span><span class="brand-copy"><strong>LogiQ</strong><small>propositional prover</small></span></a>
-        <p>Projeto acadêmico · Lógica Proposicional · <span id="currentYear"></span></p>
-        <a href="#inicio">Voltar ao topo ↑</a>
-      </div>
-    </footer>
-
-    <dialog class="settings-dialog" id="settingsDialog">
-      <form method="dialog" id="settingsForm">
-        <div class="dialog-header">
-          <div><span class="panel-kicker">Personalização</span><h2>Informações da equipe</h2></div>
-          <button class="icon-button" value="cancel" aria-label="Fechar" type="submit">×</button>
-        </div>
-        <p>Os dados ficam salvos somente neste navegador e aparecem na área de apresentação.</p>
-        <label>Título do projeto<input id="projectTitleInput" maxlength="70" value="Provador de Fórmulas Proposicionais" /></label>
-        <label>Curso, disciplina ou instituição<input id="courseInput" maxlength="100" placeholder="Ex.: Ciência da Computação — Lógica Matemática" /></label>
-        <fieldset>
-          <legend>Integrantes</legend>
-          <div id="memberInputs"></div>
-          <button class="text-button add-member" id="addMemberButton" type="button">+ Adicionar integrante</button>
-        </fieldset>
-        <div class="dialog-actions"><button class="button button-ghost" value="cancel" type="submit">Cancelar</button><button class="button button-primary" id="saveSettingsButton" value="default" type="submit">Salvar informações</button></div>
+    <dialog class="team-dialog" id="teamDialog">
+      <form method="dialog" id="teamForm">
+        <header><div><small>Apresentação</small><h2>Equipe do projeto</h2></div><button value="cancel" type="submit" aria-label="Fechar">×</button></header>
+        <label>Curso ou disciplina<input id="courseInput" type="text" placeholder="Ex.: Lógica Matemática" /></label>
+        <fieldset><legend>Integrantes (3 a 5)</legend><div id="memberInputs"></div><button class="add-member" id="addMemberButton" type="button">+ Adicionar integrante</button></fieldset>
+        <div class="dialog-actions"><button value="cancel" type="submit">Cancelar</button><button class="save-team" id="saveTeamButton" value="default" type="submit">Salvar equipe</button></div>
       </form>
     </dialog>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="app.js"></script>
+    <script src="ui.js"></script>
   </body>
 </html>

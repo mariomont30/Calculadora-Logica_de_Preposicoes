@@ -7,7 +7,7 @@
 
 ## Resumo executivo
 
-A calculadora foi submetida a uma suíte automatizada e determinística. Foram analisadas **2.017 fórmulas** e realizadas **29.078 verificações lógicas**. Todos os testes terminaram com sucesso.
+A calculadora foi submetida a uma suíte automatizada e determinística. Foram analisadas **2.017 fórmulas** e realizadas **29.105 verificações lógicas**. Todos os testes terminaram com sucesso.
 
 Embora o conjunto de todas as fórmulas proposicionais seja infinito e, portanto, não possa ser percorrido literalmente, a estratégia combina testes exaustivos sobre uma base representativa, leis clássicas, casos-limite e geração aleatória reproduzível de fórmulas profundas.
 
@@ -24,6 +24,11 @@ Embora o conjunto de todas as fórmulas proposicionais seja infinito e, portanto
 | Tableaux | Tautologia se, e somente se, todos os ramos fecham | Aprovado |
 | Contraexemplo | Todo ramo aberto produz uma interpretação que falsifica a fórmula | Aprovado |
 | Classificação | Tautologia, contradição e contingência | Aprovado |
+| Argumentos | Premissas dinâmicas, conclusão e fórmula de validade | Aprovado |
+| Frases | Tradução de `não`, `e`, `ou`, `se... então` e bicondicional | Aprovado |
+| Texto corrido | Pontos e conectivos `logo`, `portanto`, `assim`, `conclusão:` e `∴` | Aprovado |
+| Validade | Modus Ponens, silogismo hipotético, silogismo disjuntivo e bicondicional | Aprovado |
+| Invalidade | Afirmação do consequente com contraexemplo verificável | Aprovado |
 | Escala | Oito proposições e 256 interpretações | Aprovado |
 | Interface | IDs, abas, elementos semânticos e acessibilidade | Aprovado |
 | Segurança | Escape de conteúdo, ausência de eventos inline e de código dinâmico | Aprovado |
@@ -40,6 +45,9 @@ Embora o conjunto de todas as fórmulas proposicionais seja infinito e, portanto
 - distributividade da conjunção;
 - distributividade da disjunção;
 - identidade da condicional;
+- silogismo hipotético;
+- silogismo disjuntivo;
+- detecção da falácia da afirmação do consequente;
 - contradições e fórmulas contingentes simples.
 
 ## Testes gerativos
@@ -64,9 +72,9 @@ npm test
 Saída esperada:
 
 ```text
-OK — 2.017 fórmulas, 29.078 verificações lógicas.
-OK — interface e acessibilidade aprovadas.
-OK — servidor e cabeçalhos de segurança aprovados.
+OK — 2.017 fórmulas, 29.105 verificações lógicas.
+OK — interface: 66 IDs, 4 abas e acessibilidade/estrutura aprovadas.
+OK — servidor: rotas, tipos MIME, HEAD, 404 e cabeçalhos aprovados.
 ```
 
 ## Conclusão

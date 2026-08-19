@@ -1,4 +1,4 @@
-# LogiQ — Provador de Fórmulas Proposicionais
+# LogiQ — Calculadora de Lógica Proposicional
 
 Aplicação web desenvolvida para a atividade AV1 de Lógica Proposicional. O projeto implementa as três etapas solicitadas no enunciado:
 
@@ -6,7 +6,27 @@ Aplicação web desenvolvida para a atividade AV1 de Lógica Proposicional. O pr
 2. análise sintática de fórmulas bem formuladas (FBF);
 3. prova de tautologia por Tableaux semântico.
 
-Além do método principal, a aplicação gera uma tabela-verdade completa para conferência, classifica fórmulas como tautologia, contradição ou contingência e apresenta um contraexemplo quando a fórmula não é tautológica.
+Além do método principal, a aplicação testa a validade de argumentos, gera uma tabela-verdade completa, classifica fórmulas como tautologia, contradição ou contingência e apresenta um contraexemplo quando a conclusão não decorre das premissas.
+
+## O que a calculadora faz
+
+- cria campos dinâmicos para **Premissa 1, Premissa 2, ...** e uma conclusão;
+- aceita fórmulas simbólicas ou frases simples em português nos mesmos campos;
+- aceita texto corrido, separando as premissas por ponto e reconhecendo a conclusão após `logo`, `portanto`, `assim`, `conclusão:` ou `∴`;
+- traduz frases para proposições e mostra a legenda utilizada;
+- testa a validade do argumento por meio da fórmula `(P1 ∧ P2 ∧ ...) → C`;
+- mantém um modo exclusivo para análise de fórmulas proposicionais;
+- exibe análise léxica, confirmação de FBF, Tableaux, tabela-verdade e explicação do resultado.
+
+Exemplo de texto corrido:
+
+```text
+Se estudo, então sou aprovado. Estudo. Logo, sou aprovado.
+```
+
+Conectivos escritos aceitos nas frases: `não`, `e`, `ou`, `se..., então...` e `se e somente se`.
+
+Como o conteúdo é de lógica **proposicional**, uma frase completa é tratada como uma proposição atômica. O programa reconhece relações que tenham sido escritas explicitamente com esses conectivos; ele não tenta deduzir a estrutura interna de predicados da linguagem natural.
 
 ## Link da apresentação
 
@@ -16,7 +36,7 @@ Além do método principal, a aplicação gera uma tabela-verdade completa para 
 
 **Código-fonte:** https://github.com/mariomont30/Calculadora-Logica-AV1
 
-Antes da apresentação, use o botão **Configurar equipe** para inserir os nomes dos integrantes, o curso e a disciplina. Essas informações ficam salvas no navegador utilizado para apresentar.
+Antes da apresentação, use o botão **Equipe** para inserir os nomes dos integrantes e a disciplina. Essas informações ficam salvas no navegador utilizado para apresentar.
 
 ## Como executar
 
@@ -51,19 +71,19 @@ O programa usa Tableaux semântico assinado. Para testar se uma fórmula `φ` é
 
 ## Roteiro curto de apresentação
 
-1. Apresente o problema e as três etapas exibidas no topo da página.
-2. Teste um erro léxico, por exemplo `P + Q`.
-3. Teste um erro sintático, por exemplo `P ∧∧ Q`.
-4. Demonstre uma tautologia com `((P → Q) ∧ P) → Q`.
-5. Mostre os ramos fechados e compare com a tabela-verdade.
-6. Teste `P ∧ Q` e explique o ramo aberto e o contraexemplo.
-7. Finalize na seção da equipe.
+1. Mostre os campos de premissas e conclusão com o exemplo de Modus Ponens já preenchido.
+2. Clique em **Verificar validade do argumento** e explique por que todos os ramos fecham.
+3. Abra o exemplo **Argumento inválido** e mostre o contraexemplo produzido.
+4. Use **Texto corrido** com `Se estudo, então sou aprovado. Estudo. Logo, sou aprovado.`.
+5. Abra o modo **Fórmula** e teste `P ∨ ¬P`, `P ∧ ¬P` e `P → Q`.
+6. Mostre as abas de Tableaux, tabela-verdade e análise léxica/FBF.
 
 ## Estrutura
 
 - `index.html`: conteúdo e estrutura semântica da interface;
 - `styles.css`: identidade visual, responsividade, tema e impressão;
-- `app.js`: analisadores, avaliador, Tableaux e interações da interface.
+- `app.js`: analisadores, tradutor de frases, avaliador, tabela-verdade e Tableaux;
+- `ui.js`: comportamento da interface, premissas dinâmicas e apresentação dos resultados.
 
 Todo o processamento ocorre localmente no navegador e nenhum dado é enviado para servidores externos.
 
@@ -77,7 +97,9 @@ npm test
 
 A suíte valida:
 
-- 2.017 fórmulas proposicionais e 29.078 asserções lógicas;
+- 2.017 fórmulas proposicionais e 29.105 asserções lógicas;
+- argumentos válidos e inválidos, em símbolos e em frases portuguesas;
+- separação de texto por ponto e conectivos de conclusão;
 - combinações exaustivas de negação, conjunção, disjunção, condicional e bicondicional;
 - fórmulas aleatórias profundas com semente determinística;
 - equivalência entre Tableaux, tabela-verdade e um avaliador de referência independente;

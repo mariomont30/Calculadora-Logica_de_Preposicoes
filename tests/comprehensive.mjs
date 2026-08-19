@@ -13,6 +13,8 @@ const {
   buildTruthTable,
   buildTableau,
   analyzeFormula,
+  parseArgumentText,
+  compileArgument,
 } = globalThis.LogiQ;
 
 let assertions = 0;
@@ -100,6 +102,54 @@ const aliases = [
 for (const [source, normalized] of aliases) {
   equal(analyzeFormula(source).normalized, normalized, `Alias ${source}`);
 }
+
+// Argumentos em campos separados e em linguagem natural.
+const parsedArgument = parseArgumentText("Se estudo, então sou aprovado. Estudo. Logo, sou aprovado.");
+equal(parsedArgument.premises.length, 2, "Texto corrido separa duas premissas");
+equal(parsedArgument.conclusion, "sou aprovado", "Texto corrido reconhece a conclusão");
+for (const connector of ["Logo", "Portanto", "Assim", "Conclusão:", "∴"]) {
+  const parsed = parseArgumentText(`P. ${connector} Q.`);
+  equal(parsed.premises[0], "P", `Premissa com conectivo ${connector}`);
+  equal(parsed.conclusion, "Q", `Conclusão com conectivo ${connector}`);
+}
+throwsLogic(() => parseArgumentText("P. Q."), "syntax", "Exige conectivo de conclusão");
+throwsLogic(() => parseArgumentText("Logo, Q."), "syntax", "Exige premissa antes da conclusão");
+throwsLogic(() => compileArgument(["P", ""], "Q"), "syntax", "Campo de premissa vazio é informado");
+
+const naturalModusPonens = compileArgument(
+  ["Se estudo, então sou aprovado", "Estudo"],
+  "Sou aprovado",
+);
+equal(naturalModusPonens.isValid, true, "Modus Ponens com frases é válido");
+equal(naturalModusPonens.truthTable.classification, "tautology", "Validade equivale a tautologia");
+equal(naturalModusPonens.mapping.length, 2, "Frases repetidas reutilizam as mesmas proposições");
+
+const symbolicModusPonens = compileArgument(["P → Q", "P"], "Q");
+equal(symbolicModusPonens.isValid, true, "Modus Ponens simbólico é válido");
+equal(symbolicModusPonens.mapping.length, 0, "Fórmulas simbólicas dispensam tradução");
+
+const hypotheticalSyllogism = compileArgument(
+  ["Se estudo, então sou aprovado", "Se sou aprovado, então comemoro", "Estudo"],
+  "Comemoro",
+);
+equal(hypotheticalSyllogism.isValid, true, "Silogismo hipotético com frases é válido");
+
+const disjunctiveSyllogism = compileArgument(["Estudo ou trabalho", "Não estudo"], "Trabalho");
+equal(disjunctiveSyllogism.isValid, true, "Disjunção e negação em português são reconhecidas");
+
+const invalidAffirmingConsequent = compileArgument(
+  ["Se chove, então a rua fica molhada", "A rua fica molhada"],
+  "Chove",
+);
+equal(invalidAffirmingConsequent.isValid, false, "Afirmação do consequente é inválida");
+check(invalidAffirmingConsequent.tableau.countermodel !== null, "Argumento inválido possui contraexemplo");
+
+const biconditionalPhrase = compileArgument(["Estudo se e somente se sou aprovado", "Estudo"], "Sou aprovado");
+equal(biconditionalPhrase.isValid, true, "Bicondicional em português é reconhecida");
+
+const mixedArgument = compileArgument(["P → Q", "Estudo"], "Estudo");
+equal(mixedArgument.isValid, true, "Entradas simbólicas e frases podem ser combinadas");
+equal(mixedArgument.mapping[0].symbol, "A", "Tradução evita colisão com P e Q já usados");
 
 const invalidLexical = ["", "   ", "P + Q", "P @ Q", "P = Q", "P # Q", "P => Q", "P;Q", "P₂", "<script>"];
 for (const source of invalidLexical) throwsLogic(() => lex(source), "lexical", `Erro léxico: ${source}`);

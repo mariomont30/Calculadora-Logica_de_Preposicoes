@@ -11,6 +11,7 @@ const routeFiles = [
   ["/index.html", "index.html", "text/html; charset=utf-8"],
   ["/styles.css", "styles.css", "text/css; charset=utf-8"],
   ["/app.js", "app.js", "text/javascript; charset=utf-8"],
+  ["/ui.js", "ui.js", "text/javascript; charset=utf-8"],
 ];
 
 const routes = {};

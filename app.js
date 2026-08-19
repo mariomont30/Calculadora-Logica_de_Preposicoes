@@ -479,6 +479,167 @@
     return { source, tokens, ast, variables, truthTable, tableau, normalized: formatFormula(ast) };
   }
 
+  function trySymbolicFormula(source) {
+    try {
+      const tokens = lex(source);
+      const ast = parse(tokens);
+      return { tokens, ast, normalized: formatFormula(ast), variables: collectVariables(ast) };
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function cleanSentence(value) {
+    return String(value ?? "")
+      .trim()
+      .replace(/^[,;:\s]+|[,;:\s]+$/gu, "")
+      .replace(/\s+/gu, " ");
+  }
+
+  function parseArgumentText(source) {
+    if (typeof source !== "string" || source.trim() === "") {
+      throw new LogicError("syntax", "Digite as premissas e indique a conclusão com “logo”, “portanto”, “assim”, “conclusão:” ou ∴.", 0, "O argumento está vazio");
+    }
+
+    const statements = source
+      .split(/[.;\n]+/u)
+      .map(cleanSentence)
+      .filter(Boolean);
+    const conclusionPattern = /^(logo|portanto|assim|conclus[aã]o\s*:|conclui-se\s+que|∴)\s*,?\s*/iu;
+    const conclusionIndex = statements.findIndex((statement) => conclusionPattern.test(statement));
+
+    if (conclusionIndex < 0) {
+      throw new LogicError(
+        "syntax",
+        "Separe as premissas por ponto e introduza a conclusão com “logo”, “portanto”, “assim”, “conclusão:” ou ∴.",
+        source.length,
+        "Conectivo de conclusão ausente",
+      );
+    }
+
+    const conclusionStatement = statements[conclusionIndex];
+    const connectorMatch = conclusionStatement.match(conclusionPattern);
+    const conclusion = cleanSentence(conclusionStatement.replace(conclusionPattern, ""));
+    const premises = statements.slice(0, conclusionIndex);
+
+    if (premises.length === 0) {
+      throw new LogicError("syntax", "Escreva ao menos uma premissa antes da conclusão.", 0, "Premissa ausente");
+    }
+    if (!conclusion) {
+      throw new LogicError("syntax", "Escreva uma frase depois do conectivo de conclusão.", source.length, "Conclusão ausente");
+    }
+    if (conclusionIndex !== statements.length - 1) {
+      throw new LogicError("syntax", "A conclusão deve ser a última parte do argumento.", 0, "Texto após a conclusão");
+    }
+
+    return {
+      premises,
+      conclusion,
+      connector: connectorMatch ? connectorMatch[1] : "logo",
+    };
+  }
+
+  function makeTranslationContext(expressions = []) {
+    const used = new Set();
+    expressions.forEach((expression) => {
+      const symbolic = trySymbolicFormula(cleanSentence(expression));
+      symbolic?.variables.forEach((variable) => used.add(variable));
+    });
+    return { atoms: new Map(), labels: new Map(), used };
+  }
+
+  function nextProposition(context) {
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const letter = [...alphabet].find((candidate) => !context.used.has(candidate));
+    if (!letter) {
+      throw new LogicError("tableau", "O argumento possui proposições demais para uma apresentação legível.", 0, "Muitas proposições");
+    }
+    context.used.add(letter);
+    return letter;
+  }
+
+  function translateNaturalExpression(source, context) {
+    const expression = cleanSentence(source);
+    if (!expression) {
+      throw new LogicError("syntax", "Uma premissa ou conclusão ficou vazia.", 0, "Frase incompleta");
+    }
+
+    const symbolic = trySymbolicFormula(expression);
+    if (symbolic) return symbolic.normalized;
+
+    const conditional = expression.match(/^se\s+(.+?)(?:,\s*|\s+)ent[aã]o\s+(.+)$/iu);
+    if (conditional) {
+      return `(${translateNaturalExpression(conditional[1], context)} → ${translateNaturalExpression(conditional[2], context)})`;
+    }
+
+    const lower = expression.toLocaleLowerCase("pt-BR");
+    const iffConnector = " se e somente se ";
+    const iffIndex = lower.indexOf(iffConnector);
+    if (iffIndex > 0) {
+      const left = expression.slice(0, iffIndex);
+      const right = expression.slice(iffIndex + iffConnector.length);
+      return `(${translateNaturalExpression(left, context)} ↔ ${translateNaturalExpression(right, context)})`;
+    }
+
+    for (const [pattern, symbol] of [[/\s+ou\s+/iu, "∨"], [/\s+e\s+/iu, "∧"]]) {
+      const parts = expression.split(pattern).map(cleanSentence).filter(Boolean);
+      if (parts.length > 1) {
+        return parts.slice(1).reduce(
+          (formula, part) => `(${formula} ${symbol} ${translateNaturalExpression(part, context)})`,
+          translateNaturalExpression(parts[0], context),
+        );
+      }
+    }
+
+    const negation = expression.match(/^(?:n[aã]o)\s+(.+)$/iu);
+    if (negation) return `¬${translateNaturalExpression(negation[1], context)}`;
+
+    const key = expression.toLocaleLowerCase("pt-BR");
+    if (!context.atoms.has(key)) {
+      const proposition = nextProposition(context);
+      context.atoms.set(key, proposition);
+      context.labels.set(proposition, expression);
+    }
+    return context.atoms.get(key);
+  }
+
+  function compileArgument(premises, conclusion) {
+    const cleanPremises = (Array.isArray(premises) ? premises : []).map(cleanSentence);
+    const cleanConclusion = cleanSentence(conclusion);
+
+    if (cleanPremises.length === 0) {
+      throw new LogicError("syntax", "Informe pelo menos uma premissa.", 0, "Premissa ausente");
+    }
+    const emptyPremise = cleanPremises.findIndex((premise) => !premise);
+    if (emptyPremise >= 0) {
+      throw new LogicError("syntax", `Preencha ou remova a Premissa ${emptyPremise + 1}.`, 0, "Premissa vazia");
+    }
+    if (!cleanConclusion) {
+      throw new LogicError("syntax", "Informe a conclusão do argumento.", 0, "Conclusão ausente");
+    }
+
+    const context = makeTranslationContext([...cleanPremises, cleanConclusion]);
+    const premiseFormulas = cleanPremises.map((premise) => translateNaturalExpression(premise, context));
+    const conclusionFormula = translateNaturalExpression(cleanConclusion, context);
+    const conjunction = premiseFormulas.length === 1
+      ? premiseFormulas[0]
+      : premiseFormulas.slice(1).reduce((formula, premise) => `(${formula} ∧ ${premise})`, premiseFormulas[0]);
+    const validityFormula = `((${conjunction}) → (${conclusionFormula}))`;
+    const analysis = analyzeFormula(validityFormula);
+
+    return {
+      ...analysis,
+      kind: "argument",
+      premises: cleanPremises,
+      conclusion: cleanConclusion,
+      premiseFormulas,
+      conclusionFormula,
+      validityFormula,
+      mapping: [...context.labels].map(([symbol, phrase]) => ({ symbol, phrase })),
+      isValid: analysis.truthTable.classification === "tautology" && analysis.tableau.allClosed,
+    };
+  }
+
   const escapeHtml = (value) => String(value)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -1062,10 +1223,11 @@
     buildTruthTable,
     buildTableau,
     analyzeFormula,
+    parseArgumentText,
+    translateNaturalExpression,
+    compileArgument,
   };
 
-  if (typeof document !== "undefined") {
-    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initInterface);
-    else initInterface();
-  }
+  // A interface moderna é inicializada por ui.js. O protótipo anterior fica
+  // preservado acima apenas como histórico e não é executado.
 })();

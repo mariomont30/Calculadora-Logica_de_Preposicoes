@@ -11,6 +11,7 @@ const expectedRoutes = [
   ["/index.html", 200, "text/html"],
   ["/styles.css", 200, "text/css"],
   ["/app.js", 200, "text/javascript"],
+  ["/ui.js", 200, "text/javascript"],
 ];
 
 for (const [path, status, type] of expectedRoutes) {
@@ -23,9 +24,10 @@ for (const [path, status, type] of expectedRoutes) {
 }
 
 const home = await (await request("/")).text();
-assert.match(home, /Leitura guiada/, "Build contém a nova interpretação visual");
+assert.match(home, /premissas \+ conclusão/, "Build contém o novo modo de argumentos");
 assert.match(home, /styles\.css/, "HTML referencia o CSS");
 assert.match(home, /app\.js/, "HTML referencia o JavaScript");
+assert.match(home, /ui\.js/, "HTML referencia a interface moderna");
 
 const head = await request("/app.js", "HEAD");
 assert.equal(head.status, 200, "HEAD retorna sucesso");
