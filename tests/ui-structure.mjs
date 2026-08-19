@@ -41,7 +41,21 @@ assert.doesNotMatch(html, /https?:\/\//i, "Interface não deve depender de CDN e
 assert.doesNotMatch(`${core}\n${ui}`, /\beval\s*\(/, "Aplicação não deve executar código dinâmico");
 assert.match(ui, /const escapeHtml =/, "Função de escape de HTML presente");
 assert.match(ui, /escapeHtml\(result\.normalized\)/, "Fórmula escapada antes da renderização");
-assert.match(ui, /escapeHtml\(member\)/, "Nomes da equipe escapados antes da renderização");
+
+for (const member of ["Mário Monteiro", "Bruno Gonçalves", "Ana Gabriella", "José Cleidson"]) {
+  assert.match(html, new RegExp(member), `Integrante fixo ausente: ${member}`);
+}
+assert.match(html, /Res problemas nat discreta/, "Disciplina fixa ausente");
+const teamDialog = html.match(/<dialog class="team-dialog"[\s\S]*?<\/dialog>/)?.[0] || "";
+const teamButtons = [...teamDialog.matchAll(/<button\b/g)];
+assert.equal((teamDialog.match(/class="team-member-card"/g) || []).length, 4, "A equipe deve possuir exatamente 4 integrantes");
+assert.equal(teamButtons.length, 1, "A aba Equipe deve possuir somente o botão de fechar");
+assert.match(teamDialog, /<button value="close" type="submit" aria-label="Fechar">×<\/button>/, "Botão de fechar da equipe ausente");
+assert.doesNotMatch(teamDialog, /Integrante [1-4]/, "A equipe não deve exibir numeração abaixo dos nomes");
+assert.doesNotMatch(html, /Salvar equipe|Adicionar integrante|>Cancelar</, "A equipe não deve possuir controles de edição");
+assert.doesNotMatch(html, /Curso ou disciplina/, "A equipe deve exibir somente Disciplina");
+assert.doesNotMatch(ui, /logiq-team-modern|renderMemberInputs|loadTeam/, "Lógica antiga de edição da equipe ainda presente");
+assert.match(ui, /elements\.team\.addEventListener\("click", \(\) => elements\.dialog\.showModal\(\)\)/, "Botão Equipe deve abrir o diálogo");
 
 const openingBraces = (css.match(/\{/g) || []).length;
 const closingBraces = (css.match(/\}/g) || []).length;

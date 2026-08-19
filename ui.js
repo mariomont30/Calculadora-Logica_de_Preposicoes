@@ -92,10 +92,6 @@
       theme: $("#themeButton"),
       team: $("#teamButton"),
       dialog: $("#teamDialog"),
-      teamForm: $("#teamForm"),
-      courseInput: $("#courseInput"),
-      memberInputs: $("#memberInputs"),
-      addMember: $("#addMemberButton"),
       toast: $("#toast"),
     };
 
@@ -479,25 +475,6 @@
       queueValidation();
     }
 
-    function loadTeam() {
-      try {
-        const saved = JSON.parse(localStorage.getItem("logiq-team-modern"));
-        if (saved && Array.isArray(saved.members)) return saved;
-      } catch (_) { /* Dados locais inválidos são ignorados. */ }
-      return { course: "Lógica Matemática", members: ["Integrante 1", "Integrante 2", "Integrante 3"] };
-    }
-
-    function renderMemberInputs(members) {
-      elements.memberInputs.innerHTML = members.map((member, index) => `<div class="member-input-row"><input aria-label="Nome do integrante ${index + 1}" maxlength="70" value="${escapeHtml(member)}" placeholder="Nome completo" /><button data-remove-member="${index}" type="button" aria-label="Remover integrante ${index + 1}">×</button></div>`).join("");
-      $$('[data-remove-member]').forEach((button) => button.addEventListener("click", () => {
-        const values = $$("#memberInputs input").map((input) => input.value);
-        if (values.length <= 3) return showToast("A equipe deve ter pelo menos 3 integrantes.");
-        values.splice(Number(button.dataset.removeMember), 1);
-        renderMemberInputs(values);
-      }));
-      elements.addMember.hidden = members.length >= 5;
-    }
-
     $$('[data-mode]').forEach((button) => button.addEventListener("click", () => switchMode(button.dataset.mode)));
     $$('[data-argument-input]').forEach((button) => button.addEventListener("click", () => switchArgumentInput(button.dataset.argumentInput)));
     $$('[data-insert]').forEach((button) => button.addEventListener("click", () => insertAtCursor(button.dataset.insert)));
@@ -565,30 +542,7 @@
       localStorage.setItem("logiq-theme", light ? "light" : "dark");
     });
 
-    elements.team.addEventListener("click", () => {
-      const team = loadTeam();
-      elements.courseInput.value = team.course;
-      renderMemberInputs(team.members);
-      elements.dialog.showModal();
-    });
-    elements.addMember.addEventListener("click", () => {
-      const members = $$("#memberInputs input").map((input) => input.value);
-      if (members.length >= 5) return;
-      members.push("");
-      renderMemberInputs(members);
-      elements.memberInputs.lastElementChild.querySelector("input").focus();
-    });
-    elements.teamForm.addEventListener("submit", (event) => {
-      if (event.submitter?.value === "cancel") return;
-      const members = $$("#memberInputs input").map((input) => input.value.trim()).filter(Boolean);
-      if (members.length < 3) {
-        event.preventDefault();
-        showToast("Informe pelo menos 3 integrantes.");
-        return;
-      }
-      localStorage.setItem("logiq-team-modern", JSON.stringify({ course: elements.courseInput.value.trim(), members }));
-      showToast("Equipe salva neste navegador.");
-    });
+    elements.team.addEventListener("click", () => elements.dialog.showModal());
 
     renderPremises();
     queueValidation();

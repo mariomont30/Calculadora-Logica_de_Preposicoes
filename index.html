@@ -29,7 +29,7 @@
 
     <main class="page-shell" id="calculadora">
       <section class="intro">
-        <div class="intro-badge">AV1 · Lógica proposicional</div>
+        <div class="intro-badge">LÓGICA PROPOSICIONAL</div>
         <h1>Teste fórmulas e <em>argumentos</em> sem complicação.</h1>
         <p>Digite as premissas, informe a conclusão e acompanhe a validação por Tableaux e tabela-verdade.</p>
       </section>
@@ -220,11 +220,39 @@
     </main>
 
     <dialog class="team-dialog" id="teamDialog">
-      <form method="dialog" id="teamForm">
-        <header><div><small>Apresentação</small><h2>Equipe do projeto</h2></div><button value="cancel" type="submit" aria-label="Fechar">×</button></header>
-        <label>Curso ou disciplina<input id="courseInput" type="text" placeholder="Ex.: Lógica Matemática" /></label>
-        <fieldset><legend>Integrantes (3 a 5)</legend><div id="memberInputs"></div><button class="add-member" id="addMemberButton" type="button">+ Adicionar integrante</button></fieldset>
-        <div class="dialog-actions"><button value="cancel" type="submit">Cancelar</button><button class="save-team" id="saveTeamButton" value="default" type="submit">Salvar equipe</button></div>
+      <form method="dialog">
+        <header>
+          <div><small>Apresentação</small><h2>Equipe do projeto</h2></div>
+          <button value="close" type="submit" aria-label="Fechar">×</button>
+        </header>
+        <section class="team-course-card" aria-label="Disciplina">
+          <small>Disciplina</small>
+          <strong>Res problemas nat discreta</strong>
+        </section>
+        <section class="team-roster" aria-labelledby="teamMembersTitle">
+          <div class="team-roster-heading">
+            <h3 id="teamMembersTitle">Integrantes</h3>
+            <span>4 integrantes</span>
+          </div>
+          <div class="team-member-list">
+            <article class="team-member-card">
+              <span class="team-member-avatar" aria-hidden="true">MM</span>
+              <div class="team-member-copy"><strong>Mário Monteiro</strong></div>
+            </article>
+            <article class="team-member-card">
+              <span class="team-member-avatar" aria-hidden="true">BG</span>
+              <div class="team-member-copy"><strong>Bruno Gonçalves</strong></div>
+            </article>
+            <article class="team-member-card">
+              <span class="team-member-avatar" aria-hidden="true">AG</span>
+              <div class="team-member-copy"><strong>Ana Gabriella</strong></div>
+            </article>
+            <article class="team-member-card">
+              <span class="team-member-avatar" aria-hidden="true">JC</span>
+              <div class="team-member-copy"><strong>José Cleidson</strong></div>
+            </article>
+          </div>
+        </section>
       </form>
     </dialog>
 

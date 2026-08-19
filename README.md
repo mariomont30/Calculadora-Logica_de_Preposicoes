@@ -28,13 +28,34 @@ Conectivos escritos aceitos nas frases: `não`, `e`, `ou`, `se..., então...` e 
 
 Como o conteúdo é de lógica **proposicional**, uma frase completa é tratada como uma proposição atômica. O programa reconhece relações que tenham sido escritas explicitamente com esses conectivos; ele não tenta deduzir a estrutura interna de predicados da linguagem natural.
 
+## Identidade visual
+
+A interface utiliza uma linguagem acadêmica inspirada em materiais de estudo:
+
+- **tema claro:** papel em tom marfim, pautas discretas, azul universitário e verde para conclusões;
+- **tema escuro:** lousa em verde-grafite, texto em branco quente e detalhes suaves, sem efeitos neon;
+- fórmulas e títulos usam tipografia editorial, enquanto controles permanecem simples e legíveis;
+- resultados, Tableaux, tabela-verdade e análise léxica são apresentados como partes de um relatório acadêmico;
+- o seletor no cabeçalho permite alternar entre os temas claro e escuro, mantendo a preferência salva no navegador.
+
+Essa identidade visual não altera o funcionamento lógico, a estrutura dos campos da calculadora nem os resultados.
+
+## Equipe
+
+**Disciplina:** Res problemas nat discreta
+
+- Mário Monteiro
+- Bruno Gonçalves
+- Ana Gabriella
+- José Cleidson
+
+O botão **Equipe** apresenta essas informações de forma fixa e somente para leitura.
+
 ## Link da apresentação
 
 **Apresentação — GitHub Pages:** https://mariomont30.github.io/Calculadora-Logica_de_Preposicoes/
 
 **Código-fonte:** https://github.com/mariomont30/Calculadora-Logica_de_Preposicoes
-
-Antes da apresentação, use o botão **Equipe** para inserir os nomes dos integrantes e a disciplina. Essas informações ficam salvas no navegador utilizado para apresentar.
 
 ## Como executar
 
