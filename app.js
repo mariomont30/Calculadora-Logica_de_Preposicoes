@@ -510,15 +510,33 @@
       variableCount: document.querySelector("#variableCount"),
       branchCount: document.querySelector("#branchCount"),
       closedCount: document.querySelector("#closedCount"),
+      interpretation: document.querySelector("#interpretationPanel"),
+      insightTitle: document.querySelector("#insightTitle"),
+      insightText: document.querySelector("#insightText"),
+      tautologyAnswer: document.querySelector("#tautologyAnswer"),
+      tableauReading: document.querySelector("#tableauReading"),
+      ruleCountReading: document.querySelector("#ruleCountReading"),
+      truthReading: document.querySelector("#truthReading"),
+      valuationReading: document.querySelector("#valuationReading"),
+      journeyConclusion: document.querySelector("#journeyConclusion"),
+      journeySymbol: document.querySelector("#journeySymbol"),
+      journeyTitle: document.querySelector("#journeyTitle"),
+      journeyDetail: document.querySelector("#journeyDetail"),
+      copyResult: document.querySelector("#copyResultButton"),
+      printResult: document.querySelector("#printResultButton"),
       counterexample: document.querySelector("#counterexample"),
       assignmentList: document.querySelector("#assignmentList"),
       tableauStart: document.querySelector("#tableauStart"),
       tableauSteps: document.querySelector("#tableauSteps"),
       branchGrid: document.querySelector("#branchGrid"),
+      stepCountLabel: document.querySelector("#stepCountLabel"),
       truthSummary: document.querySelector("#truthSummary"),
       truthTable: document.querySelector("#truthTable"),
+      truthFilter: document.querySelector("#truthFilterButton"),
       tokenStream: document.querySelector("#tokenStream"),
+      tokenSummary: document.querySelector("#tokenSummary"),
       astTree: document.querySelector("#astTree"),
+      syntaxSummary: document.querySelector("#syntaxSummary"),
       theme: document.querySelector("#themeButton"),
       presentation: document.querySelector("#presentationButton"),
       settings: document.querySelector("#settingsButton"),
@@ -534,6 +552,8 @@
       memberList: document.querySelector("#memberList"),
       toast: document.querySelector("#toast"),
     };
+
+    let currentAnalysis = null;
 
     const pipeline = {
       lexical: document.querySelector('[data-pipeline="lexical"]'),
@@ -572,6 +592,7 @@
       elements.errorPanel.hidden = false;
       elements.successResults.hidden = true;
       elements.inputField.classList.add("error");
+      elements.inputHelp.classList.remove("valid");
       elements.inputHelp.classList.add("error");
       elements.inputHelp.textContent = error.message;
       setPipeline(error.stage || "lexical", "failed", "Erro encontrado");
@@ -606,6 +627,35 @@
       elements.variableCount.textContent = analysis.variables.length;
       elements.branchCount.textContent = analysis.tableau.branches.length;
       elements.closedCount.textContent = analysis.tableau.closedCount;
+      elements.interpretation.className = `interpretation panel is-${classification}`;
+      elements.insightTitle.textContent = classification === "tautology"
+        ? "A fórmula foi demonstrada como válida."
+        : classification === "contradiction"
+          ? "A fórmula nunca pode ser verdadeira."
+          : "O resultado depende dos valores das proposições.";
+      elements.insightText.textContent = classification === "tautology"
+        ? "Ao tentar tornar a fórmula falsa, todas as possibilidades chegaram a uma contradição. Portanto, ela é verdadeira em qualquer interpretação."
+        : classification === "contradiction"
+          ? "A tabela-verdade confirma que nenhuma interpretação satisfaz a fórmula. O Tableaux aberto abaixo mostra uma maneira de torná-la falsa."
+          : "Existe pelo menos uma interpretação verdadeira e outra falsa. Por isso, a fórmula não é uma tautologia nem uma contradição.";
+      elements.tautologyAnswer.textContent = classification === "tautology" ? "Sim — é válida" : "Não";
+      elements.tableauReading.textContent = analysis.tableau.allClosed
+        ? `Todos os ${analysis.tableau.branches.length} ramos fecharam`
+        : `${analysis.tableau.openCount} de ${analysis.tableau.branches.length} ramos ficaram abertos`;
+      elements.ruleCountReading.textContent = `${analysis.tableau.steps.length} regra${analysis.tableau.steps.length === 1 ? "" : "s"} aplicada${analysis.tableau.steps.length === 1 ? "" : "s"}`;
+      elements.truthReading.textContent = classification === "tautology"
+        ? "Todas as linhas são V"
+        : classification === "contradiction"
+          ? "Todas as linhas são F"
+          : `${trueCount} linha${trueCount === 1 ? "" : "s"} V e ${falseCount} F`;
+      elements.valuationReading.textContent = `${analysis.truthTable.rows.length} interpretaç${analysis.truthTable.rows.length === 1 ? "ão" : "ões"} verificadas`;
+      elements.journeySymbol.textContent = verdict.icon;
+      elements.journeyTitle.textContent = verdict.title;
+      elements.journeyDetail.textContent = classification === "tautology"
+        ? "Válida em qualquer cenário"
+        : classification === "contradiction"
+          ? "Falsa em qualquer cenário"
+          : "Verdade depende do cenário";
 
       if (classification !== "tautology") {
         const assignment = analysis.tableau.countermodel || analysis.truthTable.rows.find((row) => !row.result).assignment;
@@ -618,19 +668,23 @@
       }
 
       elements.truthSummary.textContent = `${trueCount} linha${trueCount === 1 ? "" : "s"} verdadeira${trueCount === 1 ? "" : "s"} e ${falseCount} falsa${falseCount === 1 ? "" : "s"}.`;
+      elements.truthFilter.disabled = falseCount === 0;
+      elements.truthFilter.textContent = falseCount === 0 ? "Nenhuma linha falsa" : "Mostrar somente falsas";
+      elements.truthFilter.classList.remove("active");
     }
 
     function renderTableau(analysis) {
       elements.tableauStart.innerHTML = `<span>F</span><strong>${escapeHtml(analysis.normalized)}</strong><small>hipótese inicial para a refutação</small>`;
+      elements.stepCountLabel.textContent = `${analysis.tableau.steps.length} etapa${analysis.tableau.steps.length === 1 ? "" : "s"} de expansão`;
       elements.tableauSteps.innerHTML = analysis.tableau.steps.length
         ? analysis.tableau.steps.map((step) => `
-          <div class="tableau-step">
-            <span>${step.number}</span>
-            <code>${escapeHtml(step.branch)} · ${escapeHtml(step.source)}</code>
+          <article class="tableau-step ${step.rule.includes("β") ? "beta" : "alpha"}">
+            <span class="step-index">${step.number}</span>
+            <div class="step-source"><small>Ramo ${escapeHtml(step.branch)}</small><code>${escapeHtml(step.source)}</code></div>
             <span class="rule-badge">${escapeHtml(step.rule)}</span>
-            <small>${escapeHtml(step.description)} ${escapeHtml(step.outcome)}</small>
-          </div>`).join("")
-        : '<div class="tableau-step"><span>1</span><code>Fórmula atômica</code><span class="rule-badge">literal</span><small>Não há conectivos para expandir.</small></div>';
+            <div class="step-explanation"><strong>${escapeHtml(step.description)}</strong><small>${escapeHtml(step.outcome)}</small></div>
+          </article>`).join("")
+        : '<article class="tableau-step alpha"><span class="step-index">1</span><div class="step-source"><small>Entrada</small><code>Fórmula atômica</code></div><span class="rule-badge">literal</span><div class="step-explanation"><strong>Não há conectivos para expandir.</strong><small>O ramo já está saturado.</small></div></article>';
 
       elements.branchGrid.innerHTML = analysis.tableau.branches.map((branch) => {
         const literals = branch.formulas
@@ -639,7 +693,7 @@
         return `
           <article class="branch-card ${branch.closed ? "closed" : "open"}">
             <div class="branch-header"><strong>${escapeHtml(branch.id)} · ramo ${escapeHtml(branch.label)}</strong><span class="branch-status">${branch.closed ? "fechado ×" : "aberto ○"}</span></div>
-            <div class="literal-list">${literals.map((item) => `<span>${item.sign ? "T" : "F"} ${escapeHtml(item.node.name)}</span>`).join("") || "<span>sem literais</span>"}</div>
+            <div class="literal-list">${literals.map((item) => `<span class="${item.sign ? "literal-true" : "literal-false"}">${item.sign ? "T" : "F"} ${escapeHtml(item.node.name)}</span>`).join("") || "<span>sem literais</span>"}</div>
             ${branch.closed
               ? `<p class="contradiction-mark">Contradição: T ${escapeHtml(branch.contradiction)} e F ${escapeHtml(branch.contradiction)}</p>`
               : '<p class="open-mark">Ramo consistente: fornece um contraexemplo.</p>'}
@@ -649,17 +703,21 @@
 
     function renderTruthTable(analysis) {
       const headers = [...analysis.variables, analysis.normalized];
+      elements.truthTable.closest(".table-wrap").classList.remove("truth-filtered");
       elements.truthTable.innerHTML = `
-        <thead><tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("")}</tr></thead>
-        <tbody>${analysis.truthTable.rows.map((row) => `
-          <tr>
-            ${analysis.variables.map((variable) => `<td>${row.assignment[variable] ? "V" : "F"}</td>`).join("")}
+        <thead><tr><th title="Número da interpretação">#</th>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("")}</tr></thead>
+        <tbody>${analysis.truthTable.rows.map((row, index) => `
+          <tr class="${row.result ? "row-true" : "row-false"}">
+            <td class="row-number">${index + 1}</td>
+            ${analysis.variables.map((variable) => `<td class="${row.assignment[variable] ? "value-true" : "value-false"}">${row.assignment[variable] ? "V" : "F"}</td>`).join("")}
             <td class="${row.result ? "truth-true" : "truth-false"}">${row.result ? "V" : "F"}</td>
           </tr>`).join("")}
         </tbody>`;
     }
 
     function renderTokens(analysis) {
+      const tokenCount = analysis.tokens.length - 1;
+      elements.tokenSummary.textContent = `${tokenCount} token${tokenCount === 1 ? "" : "s"} reconhecido${tokenCount === 1 ? "" : "s"}. Nenhum símbolo inválido foi encontrado.`;
       elements.tokenStream.innerHTML = analysis.tokens
         .filter((item) => item.type !== "EOF")
         .map((item) => `
@@ -678,14 +736,19 @@
 
     function renderAst(analysis) {
       elements.astTree.innerHTML = `<ul class="ast-tree">${astHtml(analysis.ast)}</ul>`;
+      elements.syntaxSummary.textContent = analysis.ast.type === "prop"
+        ? "A fórmula é formada por uma única proposição atômica."
+        : `O operador principal é ${NODE_LABELS[analysis.ast.type]} (${NODE_SYMBOLS[analysis.ast.type]}). A estrutura respeita a precedência e é uma FBF.`;
     }
 
     function renderSuccess(analysis) {
       elements.errorPanel.hidden = true;
       elements.successResults.hidden = false;
       elements.inputField.classList.remove("error");
-      elements.inputHelp.classList.remove("error");
+      elements.inputHelp.classList.remove("error", "valid");
       elements.inputHelp.textContent = "Análise concluída: a fórmula é uma FBF.";
+      elements.inputHelp.classList.add("valid");
+      currentAnalysis = analysis;
       renderVerdict(analysis);
       renderTableau(analysis);
       renderTruthTable(analysis);
@@ -739,6 +802,69 @@
       }
     }
 
+    let liveValidationTimer;
+    function queueLiveValidation() {
+      clearTimeout(liveValidationTimer);
+      elements.inputField.classList.remove("error");
+      elements.inputHelp.classList.remove("error", "valid");
+      currentAnalysis = null;
+      elements.results.hidden = true;
+      const source = elements.input.value;
+      if (!source.trim()) {
+        elements.inputHelp.textContent = "Digite uma fórmula ou escolha um dos exemplos abaixo.";
+        return;
+      }
+      elements.inputHelp.textContent = "Verificando a estrutura enquanto você digita...";
+      liveValidationTimer = setTimeout(() => {
+        try {
+          const tokens = lex(source);
+          const ast = parse(tokens);
+          const variableCount = collectVariables(ast).length;
+          elements.inputHelp.textContent = `Pré-validação: FBF válida · ${tokens.length - 1} tokens · ${variableCount} proposiç${variableCount === 1 ? "ão" : "ões"}.`;
+          elements.inputHelp.classList.add("valid");
+        } catch (error) {
+          elements.inputHelp.textContent = `Pré-validação: ${error.message}`;
+          elements.inputHelp.classList.add("error");
+        }
+      }, 420);
+    }
+
+    function resultSummary(analysis) {
+      const labels = { tautology: "Tautologia", contradiction: "Contradição", contingency: "Contingência" };
+      const assignment = analysis.tableau.countermodel;
+      const lines = [
+        "LOGIQ — RESUMO DA ANÁLISE",
+        `Fórmula: ${analysis.normalized}`,
+        `Classificação: ${labels[analysis.truthTable.classification]}`,
+        `Proposições: ${analysis.variables.join(", ")}`,
+        `Tableaux: ${analysis.tableau.closedCount} de ${analysis.tableau.branches.length} ramos fechados`,
+        `Tabela-verdade: ${analysis.truthTable.trueCount} linhas V e ${analysis.truthTable.falseCount} linhas F`,
+      ];
+      if (assignment) {
+        lines.push(`Contraexemplo: ${analysis.variables.map((variable) => `${variable}=${assignment[variable] ? "V" : "F"}`).join(", ")}`);
+      }
+      lines.push("Método: Tableaux semântico assinado, com conferência por tabela-verdade.");
+      return lines.join("\n");
+    }
+
+    async function copyResultSummary() {
+      if (!currentAnalysis) return;
+      const summary = resultSummary(currentAnalysis);
+      try {
+        await navigator.clipboard.writeText(summary);
+      } catch (_) {
+        const temporary = document.createElement("textarea");
+        temporary.value = summary;
+        temporary.style.position = "fixed";
+        temporary.style.opacity = "0";
+        document.body.appendChild(temporary);
+        temporary.select();
+        document.execCommand("copy");
+        temporary.remove();
+      }
+      showToast("Resumo da análise copiado.");
+    }
+
     function insertAtCursor(value) {
       const start = elements.input.selectionStart;
       const end = elements.input.selectionEnd;
@@ -747,9 +873,7 @@
       const cursor = start + value.length;
       elements.input.focus();
       elements.input.setSelectionRange(cursor, cursor);
-      elements.inputField.classList.remove("error");
-      elements.inputHelp.classList.remove("error");
-      elements.inputHelp.textContent = "A fórmula será validada antes de iniciar a prova.";
+      queueLiveValidation();
     }
 
     document.querySelectorAll("[data-insert]").forEach((button) => button.addEventListener("click", () => insertAtCursor(button.dataset.insert)));
@@ -757,6 +881,7 @@
       elements.input.value = button.dataset.example;
       elements.input.focus();
       elements.input.setSelectionRange(elements.input.value.length, elements.input.value.length);
+      queueLiveValidation();
     }));
     elements.analyze.addEventListener("click", runAnalysis);
     elements.input.addEventListener("keydown", (event) => {
@@ -765,18 +890,24 @@
         runAnalysis();
       }
     });
-    elements.input.addEventListener("input", () => {
-      elements.inputField.classList.remove("error");
-      elements.inputHelp.classList.remove("error");
-      elements.inputHelp.textContent = "A fórmula será validada antes de iniciar a prova.";
-    });
+    elements.input.addEventListener("input", queueLiveValidation);
     elements.clear.addEventListener("click", () => {
       elements.input.value = "";
       elements.results.hidden = true;
       elements.inputField.classList.remove("error");
-      elements.inputHelp.classList.remove("error");
-      elements.inputHelp.textContent = "A fórmula será validada antes de iniciar a prova.";
+      elements.inputHelp.classList.remove("error", "valid");
+      elements.inputHelp.textContent = "Digite uma fórmula ou escolha um dos exemplos abaixo.";
+      currentAnalysis = null;
       elements.input.focus();
+    });
+
+    elements.copyResult.addEventListener("click", copyResultSummary);
+    elements.printResult.addEventListener("click", () => window.print());
+    elements.truthFilter.addEventListener("click", () => {
+      const tableWrap = elements.truthTable.closest(".table-wrap");
+      const filtered = tableWrap.classList.toggle("truth-filtered");
+      elements.truthFilter.classList.toggle("active", filtered);
+      elements.truthFilter.textContent = filtered ? "Mostrar todas as linhas" : "Mostrar somente falsas";
     });
 
     document.querySelectorAll("[data-tab]").forEach((tab) => tab.addEventListener("click", () => {

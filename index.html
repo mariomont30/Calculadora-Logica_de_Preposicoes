@@ -202,17 +202,67 @@
               <div class="metric"><strong id="closedCount">0</strong><span>ramos fechados</span></div>
             </article>
 
+            <div class="result-commandbar">
+              <div class="result-ready"><span></span><strong>Análise concluída</strong><small>Todos os dados abaixo pertencem à mesma prova</small></div>
+              <div class="result-actions">
+                <button type="button" id="copyResultButton">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8h11v11H8zM5 16H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v1" /></svg>
+                  Copiar resumo
+                </button>
+                <button type="button" id="printResultButton">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v7H6z" /></svg>
+                  Imprimir prova
+                </button>
+              </div>
+            </div>
+
+            <section class="interpretation panel" id="interpretationPanel">
+              <div class="interpretation-intro">
+                <span class="interpretation-icon">i</span>
+                <div><span class="panel-kicker">Leitura guiada</span><h3 id="insightTitle">Como interpretar este resultado?</h3><p id="insightText"></p></div>
+              </div>
+              <div class="logic-journey" aria-label="Caminho até a conclusão">
+                <article>
+                  <span class="journey-number">1</span>
+                  <small>Pergunta</small>
+                  <strong>É tautologia?</strong>
+                  <b id="tautologyAnswer">Sim</b>
+                </article>
+                <i aria-hidden="true">→</i>
+                <article>
+                  <span class="journey-number">2</span>
+                  <small>Prova por Tableaux</small>
+                  <strong id="tableauReading">Todos os ramos fecharam</strong>
+                  <b id="ruleCountReading">0 regras aplicadas</b>
+                </article>
+                <i aria-hidden="true">→</i>
+                <article>
+                  <span class="journey-number">3</span>
+                  <small>Conferência</small>
+                  <strong id="truthReading">Todas as linhas são V</strong>
+                  <b id="valuationReading">0 interpretações</b>
+                </article>
+                <i aria-hidden="true">→</i>
+                <article class="journey-conclusion" id="journeyConclusion">
+                  <span class="journey-symbol" id="journeySymbol">✓</span>
+                  <small>Conclusão</small>
+                  <strong id="journeyTitle">Tautologia</strong>
+                  <b id="journeyDetail">Prova concluída</b>
+                </article>
+              </div>
+            </section>
+
             <div class="counterexample panel" id="counterexample" hidden>
-              <div><span>Contraexemplo encontrado</span><p>Com esta interpretação, a fórmula assume valor falso:</p></div>
+              <div class="counterexample-copy"><i>!</i><div><span>Contraexemplo encontrado</span><p>Com esta interpretação, a fórmula assume valor <strong>falso</strong>:</p></div></div>
               <div class="assignment-list" id="assignmentList"></div>
             </div>
 
             <div class="result-workspace panel">
               <div class="tab-list" role="tablist" aria-label="Resultados da análise">
-                <button class="tab-button active" id="tab-tableau" role="tab" aria-selected="true" aria-controls="panel-tableau" data-tab="tableau">Tableaux</button>
-                <button class="tab-button" id="tab-truth" role="tab" aria-selected="false" aria-controls="panel-truth" data-tab="truth">Tabela-verdade</button>
-                <button class="tab-button" id="tab-lexical" role="tab" aria-selected="false" aria-controls="panel-lexical" data-tab="lexical">Análise léxica</button>
-                <button class="tab-button" id="tab-syntax" role="tab" aria-selected="false" aria-controls="panel-syntax" data-tab="syntax">Árvore sintática</button>
+                <button class="tab-button active" id="tab-tableau" role="tab" aria-selected="true" aria-controls="panel-tableau" data-tab="tableau"><span>Ψ</span> Tableaux <small>prova</small></button>
+                <button class="tab-button" id="tab-truth" role="tab" aria-selected="false" aria-controls="panel-truth" data-tab="truth"><span>⊞</span> Tabela-verdade <small>conferência</small></button>
+                <button class="tab-button" id="tab-lexical" role="tab" aria-selected="false" aria-controls="panel-lexical" data-tab="lexical"><span>Aa</span> Análise léxica <small>símbolos</small></button>
+                <button class="tab-button" id="tab-syntax" role="tab" aria-selected="false" aria-controls="panel-syntax" data-tab="syntax"><span>⌘</span> Árvore sintática <small>estrutura</small></button>
               </div>
 
               <div class="tab-panel active" id="panel-tableau" role="tabpanel" aria-labelledby="tab-tableau">
@@ -220,23 +270,33 @@
                   <div><span class="panel-kicker">Prova por refutação</span><h3>Desenvolvimento do Tableaux</h3></div>
                   <p>Começamos supondo que a fórmula seja falsa. Ela é tautológica somente se todos os ramos fecharem.</p>
                 </div>
+                <div class="tableau-legend" aria-label="Legenda do Tableaux">
+                  <span><b class="legend-true">T</b> fórmula verdadeira</span>
+                  <span><b class="legend-false">F</b> fórmula falsa</span>
+                  <span><b class="legend-closed">×</b> ramo fechado</span>
+                  <span><b class="legend-open">○</b> ramo aberto</span>
+                  <span class="legend-tip">α continua no ramo · β cria alternativas</span>
+                </div>
                 <div class="tableau-start" id="tableauStart"></div>
+                <div class="subsection-label"><span>Expansão das fórmulas</span><small id="stepCountLabel"></small></div>
                 <div class="tableau-steps" id="tableauSteps"></div>
+                <div class="subsection-label"><span>Estado final dos ramos</span><small>Um ramo fecha quando contém T e F para a mesma proposição</small></div>
                 <div class="branch-grid" id="branchGrid"></div>
               </div>
 
               <div class="tab-panel" id="panel-truth" role="tabpanel" aria-labelledby="tab-truth" hidden>
                 <div class="result-panel-heading">
                   <div><span class="panel-kicker">Verificação complementar</span><h3>Tabela-verdade completa</h3></div>
-                  <p id="truthSummary"></p>
+                  <div class="truth-heading-actions"><p id="truthSummary"></p><button type="button" id="truthFilterButton">Mostrar somente falsas</button></div>
                 </div>
+                <div class="truth-legend"><span><i class="truth-dot true"></i> V = verdadeiro</span><span><i class="truth-dot false"></i> F = falso</span><small>A última coluna apresenta o valor da fórmula completa.</small></div>
                 <div class="table-wrap"><table id="truthTable"></table></div>
               </div>
 
               <div class="tab-panel" id="panel-lexical" role="tabpanel" aria-labelledby="tab-lexical" hidden>
                 <div class="result-panel-heading">
                   <div><span class="panel-kicker">Etapa I</span><h3>Tokens reconhecidos</h3></div>
-                  <p>Cada símbolo foi convertido em uma unidade com significado para o analisador.</p>
+                  <p id="tokenSummary">Cada símbolo foi convertido em uma unidade com significado para o analisador.</p>
                 </div>
                 <div class="token-stream" id="tokenStream"></div>
               </div>
@@ -244,7 +304,7 @@
               <div class="tab-panel" id="panel-syntax" role="tabpanel" aria-labelledby="tab-syntax" hidden>
                 <div class="result-panel-heading">
                   <div><span class="panel-kicker">Etapa II</span><h3>Estrutura da FBF</h3></div>
-                  <p>A árvore mostra como os operadores conectam as subfórmulas respeitando a precedência.</p>
+                  <p id="syntaxSummary">A árvore mostra como os operadores conectam as subfórmulas respeitando a precedência.</p>
                 </div>
                 <div class="ast-wrap" id="astTree"></div>
               </div>
