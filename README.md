@@ -47,9 +47,7 @@ Essa identidade visual não altera o funcionamento lógico, a estrutura dos camp
 - Mário Monteiro
 - Bruno Gonçalves
 - Ana Gabriella
-- José Cleidson
-
-O botão **Equipe** apresenta essas informações de forma fixa e somente para leitura.
+- José Cleidson 
 
 ## Link da apresentação
 
@@ -87,15 +85,6 @@ O programa usa Tableaux semântico assinado. Para testar se uma fórmula `φ` é
 
 - se todos os ramos fecham, `φ` é tautologia;
 - se existe um ramo aberto, os seus literais fornecem um contraexemplo para `φ`.
-
-## Roteiro curto de apresentação
-
-1. Mostre os campos de premissas e conclusão com o exemplo de Modus Ponens já preenchido.
-2. Clique em **Verificar validade do argumento** e explique por que todos os ramos fecham.
-3. Abra o exemplo **Argumento inválido** e mostre o contraexemplo produzido.
-4. Use **Texto corrido** com `Se estudo, então sou aprovado. Estudo. Logo, sou aprovado.`.
-5. Abra o modo **Fórmula** e teste `P ∨ ¬P`, `P ∧ ¬P` e `P → Q`.
-6. Mostre as abas de Tableaux, tabela-verdade e análise léxica/FBF.
 
 ## Estrutura
 

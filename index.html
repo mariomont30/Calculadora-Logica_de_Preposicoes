@@ -120,10 +120,16 @@
 
           <div class="live-message" id="inputMessage" aria-live="polite"><span></span> Pronto para analisar.</div>
 
-          <button class="primary-action" id="analyzeButton" type="button">
-            <span class="action-default"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg><b id="analyzeButtonLabel">Verificar validade do argumento</b></span>
-            <span class="action-loading"><i></i> Analisando passo a passo...</span>
-          </button>
+          <div class="calculator-actions">
+            <button class="clear-action" id="clearButton" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" /></svg>
+              <span>Limpar dados</span>
+            </button>
+            <button class="primary-action" id="analyzeButton" type="button">
+              <span class="action-default"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg><b id="analyzeButtonLabel">Verificar validade do argumento</b></span>
+              <span class="action-loading"><i></i> Analisando passo a passo...</span>
+            </button>
+          </div>
 
           <details class="help-details">
             <summary>Como escrever fórmulas e frases?</summary>

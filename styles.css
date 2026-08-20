@@ -816,6 +816,50 @@ textarea::placeholder {
   background: var(--red);
 }
 
+.calculator-actions {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.42fr) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 10px;
+}
+
+.clear-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 54px;
+  padding: 0 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--soft);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  transition: border-color 120ms ease, background-color 120ms ease, color 120ms ease, transform 120ms ease;
+}
+
+.clear-action svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.8;
+}
+
+.clear-action:hover {
+  border-color: var(--red);
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.clear-action:active {
+  transform: translateY(1px);
+}
+
+.clear-action:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
 .primary-action {
   display: grid;
   place-items: center;
@@ -2232,6 +2276,10 @@ td {
 
   .operator-keypad button {
     min-height: 49px;
+  }
+
+  .calculator-actions {
+    grid-template-columns: 1fr;
   }
 
   .help-grid {

@@ -51,6 +51,7 @@
       parsedPreview: $("#parsedPreview"),
       formula: $("#formulaInput"),
       message: $("#inputMessage"),
+      clear: $("#clearButton"),
       analyze: $("#analyzeButton"),
       analyzeLabel: $("#analyzeButtonLabel"),
       results: $("#results"),
@@ -127,6 +128,82 @@
 
     function resetPipeline() {
       Object.keys(pipeline).forEach((stage) => setPipeline(stage, "", "Aguardando"));
+    }
+
+    function clearRenderedResults() {
+      currentResult = null;
+      elements.results.hidden = true;
+      elements.errorPanel.hidden = true;
+      elements.successResults.hidden = true;
+      elements.argumentReading.hidden = true;
+      elements.countermodel.hidden = true;
+      resetPipeline();
+
+      [
+        elements.errorMessage,
+        elements.errorPointer,
+        elements.resultDescription,
+        elements.resultFormula,
+        elements.plainExplanation,
+        elements.argumentFlow,
+        elements.propositionLegend,
+        elements.countermodelValues,
+        elements.summaryClassification,
+        elements.summaryClassificationHelp,
+        elements.summaryBranches,
+        elements.summaryBranchesHelp,
+        elements.summaryRows,
+        elements.summaryRowsHelp,
+        elements.summaryVariables,
+        elements.tableauStart,
+        elements.tableauSteps,
+        elements.branchGrid,
+        elements.truthSummary,
+        elements.truthTable,
+        elements.tokenStream,
+        elements.astTree,
+      ].forEach((element) => { element.textContent = ""; });
+
+      const truthWrapper = elements.truthTable.closest(".table-wrap");
+      truthWrapper.classList.remove("truth-filtered");
+      elements.truthFilter.classList.remove("active");
+      elements.truthFilter.disabled = true;
+      elements.truthFilter.textContent = "Mostrar somente falsas";
+
+      $$('[data-result-tab]').forEach((tab) => {
+        const selected = tab.dataset.resultTab === "summary";
+        tab.classList.toggle("active", selected);
+        tab.setAttribute("aria-selected", String(selected));
+      });
+      $$(".result-tab-panel").forEach((panel) => {
+        panel.hidden = panel.id !== "result-tab-summary";
+      });
+    }
+
+    function clearCurrentData() {
+      window.clearTimeout(validationTimer);
+      clearRenderedResults();
+
+      let focusTarget;
+      if (mode === "argument") {
+        premises = [""];
+        elements.conclusion.value = "";
+        elements.argumentText.value = "";
+        elements.parsedPreview.classList.remove("visible");
+        elements.parsedPreview.innerHTML = "";
+        renderPremises();
+        focusTarget = argumentInputMode === "text"
+          ? elements.argumentText
+          : elements.premiseList.querySelector("input");
+        setMessage("Dados do argumento limpos. Informe uma nova entrada.");
+        showToast("Dados do argumento limpos.");
+      } else {
+        elements.formula.value = "";
+        focusTarget = elements.formula;
+        setMessage("Fórmula limpa. Digite uma nova expressão.");
+        showToast("Dados da fórmula limpos.");
+      }
+      focusTarget?.focus();
     }
 
     function pointerFor(source, position = 0) {
@@ -409,6 +486,7 @@
       elements.successResults.hidden = true;
       elements.analyze.classList.add("loading");
       elements.analyze.disabled = true;
+      elements.clear.disabled = true;
 
       try {
         const result = currentAnalysis();
@@ -429,6 +507,7 @@
       } finally {
         elements.analyze.classList.remove("loading");
         elements.analyze.disabled = false;
+        elements.clear.disabled = false;
       }
     }
 
@@ -512,6 +591,7 @@
         runAnalysis();
       }
     });
+    elements.clear.addEventListener("click", clearCurrentData);
     elements.analyze.addEventListener("click", runAnalysis);
     elements.copyResult.addEventListener("click", copySummary);
     elements.printResult.addEventListener("click", () => window.print());

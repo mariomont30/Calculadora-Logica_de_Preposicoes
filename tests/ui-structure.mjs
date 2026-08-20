@@ -21,7 +21,7 @@ assert.equal(new Set(tabs).size, tabs.length, "Abas de resultado duplicadas");
 
 for (const requiredId of [
   "premiseList", "addPremiseButton", "conclusionInput", "argumentTextInput", "formulaInput",
-  "analyzeButton", "results", "errorPanel", "successResults", "truthTable", "tableauSteps",
+  "clearButton", "analyzeButton", "results", "errorPanel", "successResults", "truthTable", "tableauSteps",
 ]) assert.ok(ids.includes(requiredId), `Controle obrigatório ausente: ${requiredId}`);
 
 for (const landmark of ["header", "main", "section", "footer", "dialog"]) {
@@ -56,6 +56,16 @@ assert.doesNotMatch(html, /Salvar equipe|Adicionar integrante|>Cancelar</, "A eq
 assert.doesNotMatch(html, /Curso ou disciplina/, "A equipe deve exibir somente Disciplina");
 assert.doesNotMatch(ui, /logiq-team-modern|renderMemberInputs|loadTeam/, "Lógica antiga de edição da equipe ainda presente");
 assert.match(ui, /elements\.team\.addEventListener\("click", \(\) => elements\.dialog\.showModal\(\)\)/, "Botão Equipe deve abrir o diálogo");
+assert.match(html, /class="calculator-actions"[\s\S]*id="clearButton"[\s\S]*id="analyzeButton"/, "Ações de limpar e analisar devem compartilhar a mesma área");
+assert.match(ui, /function clearCurrentData\(\)/, "Função para limpar os dados presente");
+assert.match(ui, /premises = \[""\]/, "Limpeza deve restaurar uma premissa vazia");
+assert.match(ui, /elements\.conclusion\.value = ""/, "Limpeza deve apagar a conclusão");
+assert.match(ui, /elements\.argumentText\.value = ""/, "Limpeza deve apagar o argumento em texto");
+assert.match(ui, /elements\.formula\.value = ""/, "Limpeza deve apagar a fórmula");
+assert.match(ui, /elements\.clear\.addEventListener\("click", clearCurrentData\)/, "Botão Limpar deve executar a limpeza");
+assert.doesNotMatch(ui, /localStorage\.(?:clear|removeItem)\s*\(/, "Limpeza não deve apagar a preferência de tema");
+assert.match(css, /\.calculator-actions\s*\{[^}]*grid-template-columns:\s*minmax/, "Ações alinhadas em telas maiores");
+assert.match(css, /@media\s*\(max-width:\s*600px\)[\s\S]*?\.calculator-actions\s*\{\s*grid-template-columns:\s*1fr;/, "Ações empilhadas no celular");
 
 const openingBraces = (css.match(/\{/g) || []).length;
 const closingBraces = (css.match(/\}/g) || []).length;
