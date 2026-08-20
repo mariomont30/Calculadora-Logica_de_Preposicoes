@@ -332,6 +332,16 @@ const namedDisjunctiveSyllogism = compileArgument(
 equal(namedDisjunctiveSyllogism.isValid, true, "Silogismo Disjuntivo natural é válido");
 equal(namedDisjunctiveSyllogism.inferenceRule?.label, "Silogismo Disjuntivo", "Silogismo Disjuntivo é identificado");
 
+const namedSimplification = compileArgument(["P ∧ Q"], "Q");
+equal(namedSimplification.isValid, true, "Simplificação é formalmente válida");
+equal(namedSimplification.inferenceRule?.label, "Simplificação", "Simplificação é identificada com uma premissa");
+argumentsChecked += 1;
+
+const namedConjunction = compileArgument(["P", "Q"], "P ∧ Q");
+equal(namedConjunction.isValid, true, "Conjunção é formalmente válida");
+equal(namedConjunction.inferenceRule?.label, "Conjunção", "Conjunção é identificada com duas premissas");
+argumentsChecked += 1;
+
 const namedAffirmingConsequent = compileArgument(
   ["Se João estuda, então João será aprovado", "João será aprovado"],
   "João estuda",
@@ -419,6 +429,206 @@ for (const incompleteNegation of ["Não", "João não"]) {
     "syntax",
     `Negação incompleta: ${incompleteNegation}`,
     "Negação incompleta",
+  );
+}
+
+// Os 14 cenários funcionais obrigatórios, executados exatamente como texto corrido.
+const requiredNaturalArguments = [
+  {
+    text: "O computador está ligado. A internet funciona. O monitor está ligado. O teclado funciona. Logo, o computador está ligado.",
+    premises: ["A", "B", "C", "D"], conclusion: "A", valid: true, rule: null,
+  },
+  {
+    text: "O servidor está ativo. O banco de dados funciona. A rede está disponível. O sistema está online. Portanto, o servidor está ativo e a rede está disponível.",
+    premises: ["A", "B", "C", "D"], conclusion: "(A ∧ C)", valid: true, rule: "Conjunção",
+  },
+  {
+    text: "O celular está carregando ou a bateria está cheia. O celular não está carregando. O Wi-Fi está ligado. O Bluetooth está desligado. Logo, a bateria está cheia.",
+    premises: ["(A ∨ B)", "¬A", "C", "D"], conclusion: "B", valid: true, rule: "Silogismo Disjuntivo",
+  },
+  {
+    text: "Se o sensor detecta movimento, então o alarme dispara. O sensor detecta movimento. A câmera está ligada. A porta está fechada. Portanto, o alarme dispara.",
+    premises: ["(A → B)", "A", "C", "D"], conclusion: "B", valid: true, rule: "Modus Ponens",
+  },
+  {
+    text: "Se o servidor falha, então o sistema fica indisponível. O sistema não fica indisponível. O banco de dados está ativo. A rede funciona. Logo, o servidor não falha.",
+    premises: ["(A → B)", "¬B", "C", "D"], conclusion: "¬A", valid: true, rule: "Modus Tollens",
+  },
+  {
+    text: "Se a bateria acaba, então o celular desliga. Se o celular desliga, então o aplicativo fecha. O Wi-Fi está ativo. O Bluetooth está ativo. Logo, se a bateria acaba, então o aplicativo fecha.",
+    premises: ["(A → B)", "(B → C)", "D", "E"], conclusion: "(A → C)", valid: true, rule: "Silogismo Hipotético",
+  },
+  {
+    text: "O carro está ligado e o farol está aceso. A garagem está aberta. O portão está fechado. A rua está vazia. Logo, o farol está aceso.",
+    premises: ["(A ∧ B)", "C", "D", "E"], conclusion: "B", valid: true, rule: "Simplificação",
+  },
+  {
+    text: "Se o alarme dispara, então a sirene toca. A sirene toca. A câmera está ligada. A porta está fechada. Logo, o alarme dispara.",
+    premises: ["(A → B)", "B", "C", "D"], conclusion: "A", valid: false, rule: "Afirmação do consequente",
+  },
+  {
+    text: "Se o computador está ligado, então o monitor recebe sinal. O computador não está ligado. O teclado funciona. A internet está disponível. Logo, o monitor não recebe sinal.",
+    premises: ["(A → B)", "¬A", "C", "D"], conclusion: "¬B", valid: false, rule: "Negação do antecedente",
+  },
+  {
+    text: "A televisão está ligada. O controle tem pilhas. A internet funciona. O aplicativo está instalado. Logo, a televisão está desligada.",
+    premises: ["A", "B", "C", "D"], conclusion: "¬A", valid: false, rule: null,
+  },
+  {
+    text: "O sistema está online ou o servidor está em manutenção. O servidor não está em manutenção. A rede funciona. O banco está disponível. Portanto, o sistema está online.",
+    premises: ["(A ∨ B)", "¬B", "C", "D"], conclusion: "A", valid: true, rule: "Silogismo Disjuntivo",
+  },
+  {
+    text: "Se a porta está aberta, então o sensor detecta abertura. Se o sensor detecta abertura, então o alarme dispara. A porta está aberta. A câmera está funcionando. Logo, o alarme dispara.",
+    premises: ["(A → B)", "(B → C)", "A", "D"], conclusion: "C", valid: true, rule: null,
+  },
+  {
+    text: "O usuário possui senha ou possui biometria. O usuário possui senha. O aplicativo está instalado. A internet funciona. Logo, o usuário possui biometria.",
+    premises: ["(A ∨ B)", "A", "C", "D"], conclusion: "B", valid: false, rule: null,
+  },
+  {
+    text: "A câmera está ligada. O sensor está ativo. A porta está fechada. O alarme está armado. Conclusão: a câmera está ligada e o sensor está ativo.",
+    premises: ["A", "B", "C", "D"], conclusion: "(A ∧ B)", valid: true, rule: "Conjunção",
+  },
+];
+
+const requiredResults = [];
+requiredNaturalArguments.forEach((scenario, index) => {
+  const label = `Cenário obrigatório ${index + 1}`;
+  const parsed = parseArgumentText(scenario.text);
+  const result = compileArgument(parsed.premises, parsed.conclusion);
+  requiredResults.push(result);
+  equal(result.premiseFormulas.join(","), scenario.premises.join(","), `${label}: FBF das premissas`);
+  equal(result.conclusionFormula, scenario.conclusion, `${label}: FBF da conclusão`);
+  equal(result.mapping.map(({ symbol }) => symbol).join(""), [...new Set(
+    `${scenario.premises.join("")}${scenario.conclusion}`.match(/[A-Z]/gu) || [],
+  )].join(""), `${label}: legenda contém somente os átomos reais`);
+  equal(result.isValid, scenario.valid, `${label}: validade formal`);
+  equal(result.tableau.allClosed, scenario.valid, `${label}: Tableaux`);
+  equal(result.truthTable.classification, scenario.valid ? "tautology" : "contingency", `${label}: tabela-verdade`);
+  equal(result.methodAgreement.consistent, true, `${label}: três métodos concordam`);
+  equal(result.inferenceRule?.label ?? null, scenario.rule, `${label}: regra didática`);
+  if (scenario.valid) equal(result.countermodel, null, `${label}: válido sem contraexemplo`);
+  else verifyArgumentCountermodel(result, label);
+  argumentsChecked += 1;
+});
+equal(requiredResults[12].countermodel.A, true, "Cenário 13: contraexemplo mantém senha verdadeira");
+equal(requiredResults[12].countermodel.B, false, "Cenário 13: contraexemplo mantém biometria falsa");
+
+// Bateria de tradução controlada: precedência, agrupamento e conectivos internos.
+for (const [source, expected] of [
+  ["A e B e C", "((A ∧ B) ∧ C)"],
+  ["A ou B ou C", "((A ∨ B) ∨ C)"],
+  ["A e B ou C", "((A ∧ B) ∨ C)"],
+  ["A ou B e C", "(A ∨ (B ∧ C))"],
+  ["(A ou B) e C", "((A ∨ B) ∧ C)"],
+  ["A ou (B e C)", "(A ∨ (B ∧ C))"],
+  ["João não não estuda", "¬¬A"],
+  ["Não é verdade que João estuda e Maria trabalha", "¬(A ∧ B)"],
+  ["Não é verdade que João estuda ou Maria trabalha", "¬(A ∨ B)"],
+  ["Se João estuda e Maria trabalha, então Pedro viaja", "((A ∧ B) → C)"],
+  ["Se João estuda ou Maria trabalha, então Pedro viaja", "((A ∨ B) → C)"],
+  ["Se João estuda, então Maria trabalha e Pedro viaja", "(A → (B ∧ C))"],
+  ["Se A, então (se B, então C)", "(A → (B → C))"],
+  ["João passa se e somente se João estuda", "(A ↔ B)"],
+  ["João passa e Maria trabalha se e somente se Pedro estuda ou Ana viaja", "((A ∧ B) ↔ (C ∨ D))"],
+]) {
+  const result = compileArgument([source], source);
+  equal(result.premiseFormulas[0], expected, `Estrutura controlada: ${source}`);
+  equal(result.methodAgreement.consistent, true, `Métodos consistentes após traduzir: ${source}`);
+  argumentsChecked += 1;
+}
+
+const repeatedNatural = parseArgumentText("João estuda. João estuda. Logo, João estuda.");
+const repeatedNaturalResult = compileArgument(repeatedNatural.premises, repeatedNatural.conclusion);
+equal(repeatedNaturalResult.premiseFormulas.join(","), "A,A", "Repetição usa a mesma proposição nas premissas");
+equal(repeatedNaturalResult.conclusionFormula, "A", "Repetição usa a mesma proposição na conclusão");
+equal(repeatedNaturalResult.mapping.length, 1, "Repetição mantém uma única legenda");
+argumentsChecked += 1;
+
+const positiveAndNegative = compileArgument(["João estuda", "João não estuda"], "João estuda");
+equal(positiveAndNegative.premiseFormulas.join(","), "A,¬A", "Negação reutiliza a proposição positiva");
+equal(positiveAndNegative.mapping.length, 1, "Positivo e negativo não duplicam a legenda");
+argumentsChecked += 1;
+
+const knownStateInsideCompound = compileArgument(
+  ["A televisão está ligada", "A internet funciona"],
+  "A televisão está desligada e A internet funciona",
+);
+equal(knownStateInsideCompound.conclusionFormula, "(¬A ∧ B)", "Estado negativo conhecido funciona dentro de fórmula composta");
+equal(knownStateInsideCompound.mapping.length, 2, "Estado negativo composto não cria um terceiro átomo");
+verifyArgumentCountermodel(knownStateInsideCompound, "Estado negativo dentro de conjunção");
+argumentsChecked += 1;
+
+const normalizedVariants = compileArgument(
+  ["João estuda.", "  joão   estuda!", "JOÃO ESTUDA?"],
+  "joão estuda",
+);
+equal(normalizedVariants.premiseFormulas.join(","), "A,A,A", "Caixa, pontuação final e espaços são normalizados");
+equal(normalizedVariants.mapping.length, 1, "Variações triviais conservam um único átomo");
+argumentsChecked += 1;
+
+for (const phrase of [
+  "O servidor funciona",
+  "Pedro estuda",
+  "A internet funciona",
+  "O equipamento funciona",
+  "O outro sistema funciona",
+]) {
+  const boundaryResult = compileArgument([phrase], phrase);
+  equal(boundaryResult.premiseFormulas[0], "A", `Conectivos não quebram palavras: ${phrase}`);
+  equal(boundaryResult.mapping.length, 1, `Token independente em: ${phrase}`);
+  argumentsChecked += 1;
+}
+
+const conditionalMarker = parseArgumentText(
+  "Se João estuda, então Maria trabalha. João estuda. Logo, Maria trabalha.",
+);
+equal(conditionalMarker.premises.length, 2, "‘então’ interno permanece na premissa condicional");
+equal(compileArgument(conditionalMarker.premises, conditionalMarker.conclusion).isValid, true, "Conclusor estrutural não conflita com condicional");
+argumentsChecked += 1;
+
+const logoInsideContent = parseArgumentText("A empresa usa logo azul. Portanto, a empresa usa logo azul.");
+equal(logoInsideContent.premises[0], "A empresa usa logo azul", "‘logo’ interno permanece no conteúdo da premissa");
+equal(compileArgument(logoInsideContent.premises, logoInsideContent.conclusion).isValid, true, "‘logo’ só conclui no início estrutural");
+argumentsChecked += 1;
+
+equal(
+  analyzeFormula("A → B → C").normalized,
+  "(A → (B → C))",
+  "Implicação simbólica permanece associativa à direita",
+);
+equal(
+  analyzeFormula("A ↔ B ↔ C").normalized,
+  "((A ↔ B) ↔ C)",
+  "Bicondicional simbólica permanece associativa à esquerda",
+);
+
+for (const [left, right, label] of [
+  ["A ∧ B", "B ∧ A", "comutatividade da conjunção"],
+  ["A ∨ B", "B ∨ A", "comutatividade da disjunção"],
+  ["¬¬A", "A", "dupla negação"],
+]) {
+  const leftAnalysis = analyzeFormula(left);
+  const rightAnalysis = analyzeFormula(right);
+  equal(leftAnalysis.truthTable.classification, rightAnalysis.truthTable.classification, `Metamórfico: ${label}`);
+  equal(leftAnalysis.tableau.allClosed, rightAnalysis.tableau.allClosed, `Tableaux metamórfico: ${label}`);
+  formulasChecked += 2;
+}
+
+for (const [premises, conclusion, title] of [
+  [["João estuda e"], "João estuda", "Conectivo sem operando"],
+  [["(João estuda e Maria trabalha"], "João estuda", "Parêntese não fechado"],
+  [["Se João estuda"], "João estuda", "Condicional ambígua"],
+  [["João estuda, Maria trabalha"], "João estuda", "Enumeração ambígua"],
+  [["O gato mia ou o cachorro late"], "O gato mia", "Estrutura ambígua"],
+  [["A lógica formal e a matemática discreta"], "A lógica formal", "Estrutura ambígua"],
+]) {
+  throwsLogic(
+    () => compileArgument(premises, conclusion),
+    "syntax",
+    `Entrada controlada inválida: ${premises[0]}`,
+    title,
   );
 }
 
@@ -534,4 +744,4 @@ equal(directTruth.rows.length, 8, "API direta da tabela-verdade");
 check(directTableau.branches.length >= 1, "API direta do Tableaux");
 
 const elapsed = Math.round(performance.now() - startedAt);
-console.log(`OK — ${formulasChecked.toLocaleString("pt-BR")} fórmulas, ${argumentsChecked.toLocaleString("pt-BR")} argumentos gerados e ${assertions.toLocaleString("pt-BR")} verificações lógicas em ${elapsed} ms.`);
+console.log(`OK — ${formulasChecked.toLocaleString("pt-BR")} fórmulas, ${argumentsChecked.toLocaleString("pt-BR")} argumentos e ${assertions.toLocaleString("pt-BR")} verificações lógicas em ${elapsed} ms.`);

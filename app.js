@@ -676,9 +676,99 @@
     return parts.slice(1).reduce((formula, part) => `(${formula} ${symbol} ${part})`, parts[0]);
   }
 
+  function validateNaturalParentheses(expression) {
+    let depth = 0;
+    for (let index = 0; index < expression.length; index += 1) {
+      if (expression[index] === "(") depth += 1;
+      if (expression[index] === ")") depth -= 1;
+      if (depth < 0) {
+        throw new LogicError("syntax", "Há um parêntese de fechamento sem abertura correspondente.", index, "Parêntese excedente");
+      }
+    }
+    if (depth !== 0) {
+      throw new LogicError("syntax", "Um parêntese aberto não foi fechado.", expression.length, "Parêntese não fechado");
+    }
+  }
+
+  function unwrapNaturalParentheses(source) {
+    let expression = cleanSentence(source);
+    validateNaturalParentheses(expression);
+    let changed = true;
+    while (changed && expression.startsWith("(") && expression.endsWith(")")) {
+      changed = false;
+      let depth = 0;
+      for (let index = 0; index < expression.length; index += 1) {
+        if (expression[index] === "(") depth += 1;
+        if (expression[index] === ")") depth -= 1;
+        if (depth === 0 && index < expression.length - 1) break;
+        if (depth === 0 && index === expression.length - 1) {
+          expression = cleanSentence(expression.slice(1, -1));
+          validateNaturalParentheses(expression);
+          changed = true;
+        }
+      }
+    }
+    return expression;
+  }
+
+  function isNaturalBoundary(character) {
+    return character === undefined || /[\s(),.;:!?]/u.test(character);
+  }
+
+  function naturalConnectorAt(expression, index, connector) {
+    const candidate = expression.slice(index, index + connector.length).toLocaleLowerCase("pt-BR");
+    if (candidate !== connector) return false;
+    return isNaturalBoundary(expression[index - 1])
+      && isNaturalBoundary(expression[index + connector.length]);
+  }
+
+  function splitTopLevelNatural(source, connector) {
+    const expression = cleanSentence(source);
+    validateNaturalParentheses(expression);
+    const parts = [];
+    let depth = 0;
+    let start = 0;
+    let found = false;
+
+    for (let index = 0; index < expression.length; index += 1) {
+      const character = expression[index];
+      if (character === "(") {
+        depth += 1;
+        continue;
+      }
+      if (character === ")") {
+        depth -= 1;
+        continue;
+      }
+
+      const matches = depth === 0 && (connector === ","
+        ? character === ","
+        : naturalConnectorAt(expression, index, connector));
+      if (!matches) continue;
+
+      parts.push(cleanSentence(expression.slice(start, index)));
+      index += connector.length - 1;
+      start = index + 1;
+      found = true;
+    }
+
+    if (!found) return [expression];
+    parts.push(cleanSentence(expression.slice(start)));
+    if (parts.some((part) => !part)) {
+      throw new LogicError(
+        "syntax",
+        `O conectivo “${connector}” precisa de uma expressão completa dos dois lados.`,
+        0,
+        "Conectivo sem operando",
+      );
+    }
+    return parts;
+  }
+
   function splitNaturalCoordination(expression, symbol) {
-    const pattern = symbol === "∧" ? /\s*(?:,|\s+e\s+)\s*/iu : /\s+ou\s+/iu;
-    return expression.split(pattern).map(cleanSentence).filter(Boolean);
+    if (symbol === "∨") return splitTopLevelNatural(expression, "ou");
+    return splitTopLevelNatural(expression, ",")
+      .flatMap((part) => splitTopLevelNatural(part, "e"));
   }
 
   function tryKnownCoordination(expression, context, symbol) {
@@ -693,26 +783,101 @@
   }
 
   const commonFiniteVerbs = new Set([
-    "acho", "acredito", "aprendo", "aprende", "aprendem", "aprovo", "aprova", "aprovam",
-    "canto", "canta", "cantam", "chego", "chega", "chegam", "chove", "comemoro", "comemora",
-    "comemoram", "compro", "compra", "compram", "concluo", "conclui", "concluem", "corro", "corre",
-    "correm", "danço", "dança", "dançam", "durmo", "dorme", "dormem", "estudo", "estuda", "estudam",
-    "faço", "faz", "fazem", "fica", "ficam", "fui", "foi", "foram", "gosto", "gosta", "gostam",
-    "leio", "lê", "leem", "posso", "pode", "podem", "quero", "quer", "querem", "sei", "sabe",
-    "sabem", "sou", "és", "é", "somos", "são", "tenho", "tem", "têm", "trabalho", "trabalha",
-    "trabalham", "treino", "treina", "treinam", "viajo", "viaja", "viajam", "vou", "vai", "vamos", "vão",
+    "acaba", "acabam", "acho", "acredito", "aprendo", "aprende", "aprendem", "aprovo", "aprova", "aprovam",
+    "canto", "canta", "cantam", "chego", "chega", "chegam", "chove", "comemoro", "comemora", "comemoram",
+    "compro", "compra", "compram", "concluo", "conclui", "concluem", "corro", "corre", "correm", "danço",
+    "dança", "dançam", "desliga", "desligam", "detecta", "detectam", "dispara", "disparam", "durmo", "dorme",
+    "dormem", "estou", "estás", "está", "estamos", "estão", "estava", "estavam", "estará", "estarão", "estudo",
+    "estuda", "estudam", "falha", "falham", "faço", "faz", "fazem", "fecha", "fecham", "fica", "ficam",
+    "fui", "foi", "foram", "funciona", "funcionam", "gosto", "gosta", "gostam", "leio", "lê", "leem",
+    "passa", "passam", "posso", "pode", "podem", "possui", "possuem", "quero", "quer", "querem", "recebe",
+    "recebem", "sei", "sabe", "sabem", "sou", "és", "é", "somos", "são", "tem", "têm", "tenho", "toca",
+    "tocam", "trabalho", "trabalha", "trabalham", "treino", "treina", "treinam", "viajo", "viaja", "viajam",
+    "viajou", "viajaram", "vou", "vai", "vamos", "vão",
   ]);
+
+  function naturalWordTokens(source) {
+    return cleanSentence(source).split(/\s+/u).map((word) => ({
+      raw: word,
+      normalized: word.normalize("NFC").toLocaleLowerCase("pt-BR").replace(/[^\p{L}]/gu, ""),
+    }));
+  }
+
+  function finiteVerbIndex(source) {
+    return naturalWordTokens(source).findIndex(({ normalized }) => commonFiniteVerbs.has(normalized));
+  }
+
+  function completeCoordinatedParts(parts, context) {
+    const firstTokens = naturalWordTokens(parts[0]);
+    const firstVerbIndex = finiteVerbIndex(parts[0]);
+    const sharedSubject = firstVerbIndex > 0
+      ? firstTokens.slice(0, firstVerbIndex).map(({ raw }) => raw).join(" ")
+      : "";
+
+    return parts.map((part, index) => {
+      if (index === 0 || !sharedSubject) return part;
+      if (resolveKnownAtom(part, context, { allowEllipsis: true })) return part;
+      const tokens = naturalWordTokens(part);
+      const verbIndex = finiteVerbIndex(part);
+      const omittedSubject = verbIndex === 0
+        || (verbIndex === 1 && /^n[aã]o$/iu.test(tokens[0]?.normalized || ""));
+      return omittedSubject ? cleanSentence(`${sharedSubject} ${part}`) : part;
+    });
+  }
+
+  function startsLikeIndependentSubject(source) {
+    const tokens = naturalWordTokens(source).filter(({ normalized }) => normalized);
+    const first = tokens[0];
+    if (!first) return false;
+    if (/^(?:eu|tu|ele|ela|n[oó]s|voc[eê]s?|eles|elas|o|a|os|as|um|uma|uns|umas)$/iu.test(first.normalized)) {
+      return true;
+    }
+    return /^\p{Lu}/u.test(first.raw);
+  }
+
+  function isSafeAtomicCoordination(parts) {
+    const verbIndexes = parts.map(finiteVerbIndex);
+    const wordCounts = parts.map((part) => naturalWordTokens(part).filter(({ normalized }) => normalized).length);
+    const compoundSubject = verbIndexes[0] < 0
+      && wordCounts[0] <= 2
+      && verbIndexes.slice(1).filter((index) => index >= 0).length === 1;
+    if (compoundSubject) return true;
+
+    const compoundObject = verbIndexes[0] >= 0
+      && verbIndexes.slice(1).every((index) => index < 0)
+      && parts.slice(1).every((part) => !startsLikeIndependentSubject(part));
+    if (compoundObject) return true;
+
+    return wordCounts.some((count) => count < 2);
+  }
 
   function looksLikeNaturalClause(source, context) {
     const expression = cleanSentence(source);
     if (!expression) return false;
     if (trySymbolicFormula(expression)) return true;
+    if (unwrapNaturalParentheses(expression) !== expression) return true;
     if (resolveKnownAtom(expression, context, { allowEllipsis: true })) return true;
+    if (controlledKnownStateNegation(expression, context)) return true;
+    if (/^se(?:\s|$)/iu.test(expression)) return true;
+    if (/^n[aã]o\s+[eé]\s+verdade\s+que\s+/iu.test(expression)) return true;
+    if (splitTopLevelNatural(expression, "se e somente se").length > 1) return true;
+    for (const connector of ["ou", "e"]) {
+      const parts = splitTopLevelNatural(expression, connector);
+      if (parts.length > 1 && parts.every((part) => looksLikeNaturalClause(part, context))) return true;
+    }
     if (/^(?:n[aã]o)\s+/iu.test(expression)) return true;
     if (/^(?:eu|tu|ele|ela|n[oó]s|voc[eê]s?|eles|elas|a\s+gente)\s+/iu.test(expression)) return true;
 
     const words = naturalKey(expression).split(/[^\p{L}]+/u).filter(Boolean);
     return words.some((word) => commonFiniteVerbs.has(word));
+  }
+
+  function controlledKnownStateNegation(source, context) {
+    const expression = cleanSentence(source);
+    if (!/desligad[oa]s?[.!?]*$/iu.test(expression)) return null;
+    const positive = expression.replace(/desligad([oa]s?)([.!?]*)$/iu, "ligad$1$2");
+    const knownPositive = resolveKnownAtom(positive, context, { failOnAmbiguity: true });
+    return knownPositive ? `¬${knownPositive}` : null;
   }
 
   function controlledNegationTarget(source) {
@@ -750,24 +915,52 @@
       throw new LogicError("syntax", "Uma premissa ou conclusão ficou vazia.", 0, "Frase incompleta");
     }
 
+    validateNaturalParentheses(expression);
+
     const symbolic = trySymbolicFormula(expression);
     if (symbolic) return symbolic.normalized;
+
+    const unwrapped = unwrapNaturalParentheses(expression);
+    if (unwrapped !== expression) return translateNaturalExpression(unwrapped, context);
+
+    const explicitFormulaNegation = expression.match(/^n[aã]o\s+[eé]\s+verdade\s+que\s+(.+)$/iu);
+    if (explicitFormulaNegation) {
+      return `¬${translateNaturalExpression(explicitFormulaNegation[1], context)}`;
+    }
 
     const knownAtom = resolveKnownAtom(expression, context, { failOnAmbiguity: true });
     if (knownAtom) return knownAtom;
 
-    const conditional = expression.match(/^se\s+(.+?)(?:,\s*|\s+)ent[aã]o\s+(.+)$/iu);
-    if (conditional) {
-      return `(${translateNaturalExpression(conditional[1], context)} → ${translateNaturalExpression(conditional[2], context)})`;
+    if (/^se(?:\s|$)/iu.test(expression)) {
+      const conditionalBody = cleanSentence(expression.replace(/^se\s+/iu, ""));
+      const conditionalParts = splitTopLevelNatural(conditionalBody, "então");
+      if (conditionalParts.length !== 2) {
+        throw new LogicError(
+          "syntax",
+          "Escreva a condicional no formato “se proposição, então proposição”, sem omitir nenhuma das duas partes.",
+          0,
+          "Condicional ambígua",
+        );
+      }
+      const antecedent = cleanSentence(conditionalParts[0].replace(/,\s*$/u, ""));
+      const consequent = conditionalParts[1];
+      if (!antecedent || !consequent) {
+        throw new LogicError(
+          "syntax",
+          "A condicional precisa de um antecedente e de um consequente completos.",
+          0,
+          "Condicional incompleta",
+        );
+      }
+      return `(${translateNaturalExpression(antecedent, context)} → ${translateNaturalExpression(consequent, context)})`;
     }
 
-    const lower = expression.toLocaleLowerCase("pt-BR");
-    const iffConnector = " se e somente se ";
-    const iffIndex = lower.indexOf(iffConnector);
-    if (iffIndex > 0) {
-      const left = expression.slice(0, iffIndex);
-      const right = expression.slice(iffIndex + iffConnector.length);
-      return `(${translateNaturalExpression(left, context)} ↔ ${translateNaturalExpression(right, context)})`;
+    const iffParts = splitTopLevelNatural(expression, "se e somente se");
+    if (iffParts.length > 1) {
+      return reduceNaturalFormulas(
+        iffParts.map((part) => translateNaturalExpression(part, context)),
+        "↔",
+      );
     }
 
     for (const symbol of ["∨", "∧"]) {
@@ -775,7 +968,7 @@
       if (knownCoordination) return knownCoordination;
     }
 
-    if (expression.includes(",")) {
+    if (splitTopLevelNatural(expression, ",").length > 1) {
       throw new LogicError(
         "syntax",
         "Não foi possível relacionar todos os itens da enumeração com proposições já informadas. Escreva cada ideia como uma frase completa para eliminar a ambiguidade.",
@@ -784,15 +977,26 @@
       );
     }
 
-    for (const [pattern, symbol] of [[/\s+ou\s+/iu, "∨"], [/\s+e\s+/iu, "∧"]]) {
-      const parts = expression.split(pattern).map(cleanSentence).filter(Boolean);
+    for (const [connector, symbol] of [["ou", "∨"], ["e", "∧"]]) {
+      const parts = completeCoordinatedParts(splitTopLevelNatural(expression, connector), context);
       if (parts.length > 1 && parts.every((part) => looksLikeNaturalClause(part, context))) {
         return reduceNaturalFormulas(parts.map((part) => translateNaturalExpression(part, context)), symbol);
+      }
+      if (parts.length > 1 && !isSafeAtomicCoordination(parts)) {
+        throw new LogicError(
+          "syntax",
+          "Não foi possível determinar de forma inequívoca a estrutura lógica da frase. Reescreva cada lado do conectivo como uma proposição completa.",
+          0,
+          "Estrutura ambígua",
+        );
       }
     }
 
     const negationTarget = controlledNegationTarget(expression);
     if (negationTarget) return `¬${translateNaturalExpression(negationTarget, context)}`;
+
+    const knownStateNegation = controlledKnownStateNegation(expression, context);
+    if (knownStateNegation) return knownStateNegation;
 
     const key = naturalKey(expression);
     if (!context.atoms.has(key)) {
@@ -819,6 +1023,18 @@
   }
 
   function identifyInferenceRule(premiseAsts, conclusionAst, isValid) {
+    if (isValid) {
+      const simplified = premiseAsts.some((premise) => premise.type === "and"
+        && (astEquals(conclusionAst, premise.left) || astEquals(conclusionAst, premise.right)));
+      if (simplified) return inferenceRule("simplification", "Simplificação", true);
+
+      if (conclusionAst.type === "and") {
+        const hasLeft = premiseAsts.some((premise) => astEquals(premise, conclusionAst.left));
+        const hasRight = premiseAsts.some((premise) => astEquals(premise, conclusionAst.right));
+        if (hasLeft && hasRight) return inferenceRule("conjunction", "Conjunção", true);
+      }
+    }
+
     if (premiseAsts.length < 2) return null;
 
     for (let conditionalIndex = 0; conditionalIndex < premiseAsts.length; conditionalIndex += 1) {

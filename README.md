@@ -27,6 +27,8 @@ Se estudo, então sou aprovado. Estudo. Logo, sou aprovado.
 
 Conectivos escritos aceitos nas frases: `não`, `e`, `ou`, `se..., então...` e `se e somente se`.
 
+O tradutor respeita a mesma precedência do modo simbólico (`¬`, `∧`, `∨`, `→`, `↔`) e reconhece parênteses em expressões controladas. Assim, `(A ou B) e C` permanece diferente de `A ou (B e C)`. Também são aceitos antecedentes e consequentes compostos, como `Se o sensor está ativo e a porta está aberta, então o alarme dispara`.
+
 Como o conteúdo é de lógica **proposicional**, uma frase completa é tratada como uma proposição atômica. O programa reconhece relações escritas explicitamente com esses conectivos e reaproveita proposições anteriores quando a conclusão omite um sujeito, verbo ou complemento de forma inequívoca.
 
 Exemplo de reaproveitamento correto:
@@ -38,13 +40,13 @@ Assim, hoje chove e eu estudo, trabalho e vou à academia.
 
 Nesse caso, a conclusão é traduzida com as mesmas quatro proposições das premissas, sem criar letras extras. Diferenças entre maiúsculas e minúsculas e a omissão inequívoca de pronomes também são normalizadas. Se um trecho puder apontar para mais de uma proposição ou se uma enumeração estiver incompleta, a calculadora pede que as frases sejam reescritas por extenso em vez de escolher uma interpretação silenciosamente.
 
-O recurso é intencionalmente um **português controlado**: ele não tenta identificar sinônimos, referências contextuais ou equivalências semânticas entre frases diferentes. Essa limitação mantém a tradução previsível e o resultado lógico verificável.
+O recurso é intencionalmente um **português controlado**: ele não tenta identificar sinônimos, referências contextuais ou equivalências semânticas entre frases diferentes. Quando a estrutura não puder ser determinada de modo inequívoco, a calculadora solicita a reescrita de cada lado do conectivo como uma proposição completa. Essa limitação mantém a tradução previsível e o resultado lógico verificável.
 
 A negação também reutiliza a proposição positiva quando a construção é direta. Por exemplo, se `A` representa `João estuda`, a frase `João não estuda` é traduzida como `¬A`. Construções ambíguas, como `não só`, não são interpretadas silenciosamente.
 
 ## Regras didáticas e segurança formal
 
-Quando a estrutura corresponde exatamente a um padrão conhecido, o resultado informa **Modus Ponens**, **Modus Tollens**, **Silogismo Hipotético**, **Silogismo Disjuntivo**, **Afirmação do consequente** ou **Negação do antecedente**. Essa identificação é apenas explicativa: a validade continua sendo calculada pelo Tableaux, pela tabela-verdade e pelo avaliador semântico.
+Quando a estrutura corresponde exatamente a um padrão conhecido, o resultado informa **Modus Ponens**, **Modus Tollens**, **Silogismo Hipotético**, **Silogismo Disjuntivo**, **Simplificação**, **Conjunção**, **Afirmação do consequente** ou **Negação do antecedente**. Essa identificação é apenas explicativa: a validade continua sendo calculada pelo Tableaux, pela tabela-verdade e pelo avaliador semântico.
 
 Antes de mostrar um contraexemplo, o programa confirma que todas as premissas são verdadeiras e a conclusão é falsa sob a atribuição apresentada. Se os três métodos não concordarem, a análise é interrompida em vez de exibir um resultado inseguro.
 
@@ -127,10 +129,13 @@ npm test
 
 A suíte valida:
 
-- 2.017 fórmulas proposicionais, 512 argumentos gerados e 34.494 asserções lógicas;
+- 2.023 fórmulas proposicionais, 554 argumentos e 34.722 verificações lógicas;
+- os 14 cenários funcionais obrigatórios em texto corrido, com suas FBFs, regras e contraexemplos;
 - argumentos válidos e inválidos, em símbolos e em frases portuguesas;
-- negação interna, reutilização de proposições e estruturas compostas explícitas;
-- identificação das quatro regras válidas e das duas falácias documentadas;
+- precedência, parênteses, conectivos repetidos, negação dupla e negação de fórmulas compostas;
+- negação interna, reutilização de proposições, sujeito compartilhado e estruturas compostas explícitas;
+- identificação das seis regras válidas e das duas falácias documentadas;
+- rejeição segura de estruturas ambíguas, conectivos incompletos e parênteses incorretos;
 - recusa didática de quantificadores fora do escopo proposicional;
 - separação de texto por ponto e conectivos de conclusão;
 - combinações exaustivas de negação, conjunção, disjunção, condicional e bicondicional;
@@ -141,3 +146,5 @@ A suíte valida:
 - fórmulas com até oito proposições e 256 interpretações;
 - integridade da interface, acessibilidade, responsividade e segurança da renderização;
 - build de produção, rotas, tipos MIME, requisições HEAD, página 404 e cabeçalhos de segurança.
+
+Os resultados completos, incluindo as 14 FBFs e os contraexemplos validados, estão em [`RELATORIO-DE-TESTES.md`](RELATORIO-DE-TESTES.md).
