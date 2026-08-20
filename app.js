@@ -475,8 +475,42 @@
       throw new LogicError("tableau", "Para manter a prova e a tabela legíveis, use no máximo 8 proposições diferentes.", 0, "Muitas proposições");
     }
     const truthTable = buildTruthTable(ast, variables);
-    const tableau = buildTableau(ast, variables);
-    return { source, tokens, ast, variables, truthTable, tableau, normalized: formatFormula(ast) };
+    const rawTableau = buildTableau(ast, variables);
+    const truthTableTautology = truthTable.classification === "tautology";
+    if (rawTableau.allClosed !== truthTableTautology) {
+      throw new LogicError(
+        "tableau",
+        "O Tableaux e a tabela-verdade produziram resultados incompatíveis. A análise foi interrompida por segurança.",
+        0,
+        "Inconsistência entre os métodos",
+      );
+    }
+
+    const falseAssignments = truthTable.rows.filter((row) => !row.result).map((row) => row.assignment);
+    const countermodel = truthTableTautology
+      ? null
+      : [rawTableau.countermodel, ...falseAssignments]
+        .find((assignment) => assignment && evaluate(ast, assignment) === false) || null;
+    if (!truthTableTautology && !countermodel) {
+      throw new LogicError(
+        "tableau",
+        "A fórmula não é uma tautologia, mas nenhum contraexemplo confirmado foi encontrado.",
+        0,
+        "Contraexemplo não confirmado",
+      );
+    }
+
+    const tableau = { ...rawTableau, countermodel };
+    return {
+      source,
+      tokens,
+      ast,
+      variables,
+      truthTable,
+      tableau,
+      normalized: formatFormula(ast),
+      countermodelVerified: countermodel ? evaluate(ast, countermodel) === false : null,
+    };
   }
 
   function trySymbolicFormula(source) {
@@ -511,6 +545,23 @@
 
   function hasExplicitPersonalSubject(value) {
     return /^(?:eu|tu|ele|ela|n[oó]s|v[oó]s|voc[eê]s?|eles|elas|a\s+gente)\s+/iu.test(naturalKey(value));
+  }
+
+  const predicateScopePattern = /(?:^|[^\p{L}])((?:todo|toda|todos|todas|algum|alguma|alguns|algumas|algu[eé]m|nenhum|nenhuma|nenhuns|nenhumas|ningu[eé]m|cada|qualquer|quaisquer|existe|existem|h[aá]))(?=$|[^\p{L}])/iu;
+
+  function ensurePropositionalScope(expressions) {
+    for (const source of expressions) {
+      const expression = cleanSentence(source);
+      if (!expression || trySymbolicFormula(expression)) continue;
+      const marker = naturalKey(expression).match(predicateScopePattern)?.[1];
+      if (!marker) continue;
+      throw new LogicError(
+        "syntax",
+        `O termo “${marker}” indica uma relação interna entre elementos da frase que não é representada diretamente pela Lógica Proposicional. Reescreva o argumento usando conectivos proposicionais explícitos.`,
+        0,
+        "Fora do escopo proposicional",
+      );
+    }
   }
 
   function parseArgumentText(source) {
@@ -664,6 +715,35 @@
     return words.some((word) => commonFiniteVerbs.has(word));
   }
 
+  function controlledNegationTarget(source) {
+    const expression = cleanSentence(source);
+    if (/(?:^|\s)n[aã]o\s+(?:s[oó]|somente|apenas)(?:\s|$)/iu.test(expression)) {
+      throw new LogicError(
+        "syntax",
+        "A construção com “não” pode ter mais de uma leitura. Escreva a negação de forma direta, repetindo a proposição completa.",
+        0,
+        "Negação ambígua",
+      );
+    }
+    if (/^(?:n[aã]o)$|\s+n[aã]o$/iu.test(expression)) {
+      throw new LogicError(
+        "syntax",
+        "Escreva a proposição que deve ser negada depois de “não”.",
+        0,
+        "Negação incompleta",
+      );
+    }
+
+    const prefix = expression.match(/^n[aã]o\s+(.+)$/iu);
+    if (prefix) return cleanSentence(prefix[1]);
+
+    const internal = expression.match(/^(.+?)\s+n[aã]o\s+(.+)$/iu);
+    if (!internal) return null;
+    const subject = cleanSentence(internal[1]);
+    const predicate = cleanSentence(internal[2]);
+    return cleanSentence(`${subject} ${predicate}`);
+  }
+
   function translateNaturalExpression(source, context) {
     const expression = cleanSentence(source);
     if (!expression) {
@@ -711,8 +791,8 @@
       }
     }
 
-    const negation = expression.match(/^(?:n[aã]o)\s+(.+)$/iu);
-    if (negation) return `¬${translateNaturalExpression(negation[1], context)}`;
+    const negationTarget = controlledNegationTarget(expression);
+    if (negationTarget) return `¬${translateNaturalExpression(negationTarget, context)}`;
 
     const key = naturalKey(expression);
     if (!context.atoms.has(key)) {
@@ -721,6 +801,88 @@
       context.labels.set(proposition, expression);
     }
     return context.atoms.get(key);
+  }
+
+  function astEquals(left, right) {
+    if (!left || !right || left.type !== right.type) return false;
+    if (left.type === "prop") return left.name === right.name;
+    if (left.type === "not") return astEquals(left.child, right.child);
+    return astEquals(left.left, right.left) && astEquals(left.right, right.right);
+  }
+
+  function isNegationOf(node, target) {
+    return node?.type === "not" && astEquals(node.child, target);
+  }
+
+  function inferenceRule(key, label, valid) {
+    return { key, label, valid };
+  }
+
+  function identifyInferenceRule(premiseAsts, conclusionAst, isValid) {
+    if (premiseAsts.length < 2) return null;
+
+    for (let conditionalIndex = 0; conditionalIndex < premiseAsts.length; conditionalIndex += 1) {
+      const conditional = premiseAsts[conditionalIndex];
+      if (conditional.type !== "imp") continue;
+      for (let otherIndex = 0; otherIndex < premiseAsts.length; otherIndex += 1) {
+        if (otherIndex === conditionalIndex) continue;
+        const other = premiseAsts[otherIndex];
+        if (isValid && astEquals(other, conditional.left) && astEquals(conclusionAst, conditional.right)) {
+          return inferenceRule("modus-ponens", "Modus Ponens", true);
+        }
+        if (isValid && isNegationOf(other, conditional.right) && isNegationOf(conclusionAst, conditional.left)) {
+          return inferenceRule("modus-tollens", "Modus Tollens", true);
+        }
+        if (!isValid && astEquals(other, conditional.right) && astEquals(conclusionAst, conditional.left)) {
+          return inferenceRule("affirming-consequent", "Afirmação do consequente", false);
+        }
+        if (!isValid && isNegationOf(other, conditional.left) && isNegationOf(conclusionAst, conditional.right)) {
+          return inferenceRule("denying-antecedent", "Negação do antecedente", false);
+        }
+      }
+    }
+
+    if (isValid && conclusionAst.type === "imp") {
+      for (let firstIndex = 0; firstIndex < premiseAsts.length; firstIndex += 1) {
+        const first = premiseAsts[firstIndex];
+        if (first.type !== "imp") continue;
+        for (let secondIndex = 0; secondIndex < premiseAsts.length; secondIndex += 1) {
+          if (secondIndex === firstIndex) continue;
+          const second = premiseAsts[secondIndex];
+          if (second.type === "imp"
+            && astEquals(first.right, second.left)
+            && astEquals(conclusionAst.left, first.left)
+            && astEquals(conclusionAst.right, second.right)) {
+            return inferenceRule("hypothetical-syllogism", "Silogismo Hipotético", true);
+          }
+        }
+      }
+    }
+
+    if (isValid) {
+      for (let disjunctionIndex = 0; disjunctionIndex < premiseAsts.length; disjunctionIndex += 1) {
+        const disjunction = premiseAsts[disjunctionIndex];
+        if (disjunction.type !== "or") continue;
+        for (let otherIndex = 0; otherIndex < premiseAsts.length; otherIndex += 1) {
+          if (otherIndex === disjunctionIndex) continue;
+          const other = premiseAsts[otherIndex];
+          if (isNegationOf(other, disjunction.left) && astEquals(conclusionAst, disjunction.right)) {
+            return inferenceRule("disjunctive-syllogism", "Silogismo Disjuntivo", true);
+          }
+          if (isNegationOf(other, disjunction.right) && astEquals(conclusionAst, disjunction.left)) {
+            return inferenceRule("disjunctive-syllogism", "Silogismo Disjuntivo", true);
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  function isArgumentCountermodel(assignment, premiseAsts, conclusionAst) {
+    if (!assignment) return false;
+    return premiseAsts.every((premise) => evaluate(premise, assignment))
+      && !evaluate(conclusionAst, assignment);
   }
 
   function compileArgument(premises, conclusion) {
@@ -738,17 +900,57 @@
       throw new LogicError("syntax", "Informe a conclusão do argumento.", 0, "Conclusão ausente");
     }
 
+    ensurePropositionalScope([...cleanPremises, cleanConclusion]);
+
     const context = makeTranslationContext([...cleanPremises, cleanConclusion]);
     const premiseFormulas = cleanPremises.map((premise) => translateNaturalExpression(premise, context));
     const conclusionFormula = translateNaturalExpression(cleanConclusion, context);
+    const premiseAsts = premiseFormulas.map((formula) => parse(lex(formula)));
+    const conclusionAst = parse(lex(conclusionFormula));
     const conjunction = premiseFormulas.length === 1
       ? premiseFormulas[0]
       : premiseFormulas.slice(1).reduce((formula, premise) => `(${formula} ∧ ${premise})`, premiseFormulas[0]);
     const validityFormula = `((${conjunction}) → (${conclusionFormula}))`;
     const analysis = analyzeFormula(validityFormula);
+    const truthTableValid = analysis.truthTable.classification === "tautology";
+    const tableauValid = analysis.tableau.allClosed;
+    const semanticCountermodels = analysis.truthTable.rows
+      .map((row) => row.assignment)
+      .filter((assignment) => isArgumentCountermodel(assignment, premiseAsts, conclusionAst));
+    const semanticValid = semanticCountermodels.length === 0;
+
+    if (truthTableValid !== tableauValid || truthTableValid !== semanticValid) {
+      throw new LogicError(
+        "tableau",
+        "Os métodos de verificação produziram resultados incompatíveis. Nenhum resultado será exibido até que a análise seja refeita.",
+        0,
+        "Inconsistência entre os métodos",
+      );
+    }
+
+    const isValid = truthTableValid;
+    const countermodelCandidates = [analysis.tableau.countermodel, ...semanticCountermodels];
+    const countermodel = isValid
+      ? null
+      : countermodelCandidates.find((assignment) => isArgumentCountermodel(assignment, premiseAsts, conclusionAst)) || null;
+
+    if (!isValid && !countermodel) {
+      throw new LogicError(
+        "tableau",
+        "O argumento foi considerado inválido, mas nenhum contraexemplo confirmado foi encontrado. O resultado foi interrompido por segurança.",
+        0,
+        "Contraexemplo não confirmado",
+      );
+    }
+
+    const detectedRule = identifyInferenceRule(premiseAsts, conclusionAst, isValid);
+    const validityExplanation = isValid
+      ? "Não existe interpretação em que todas as premissas sejam verdadeiras e a conclusão seja falsa. Portanto, a conclusão decorre logicamente das premissas."
+      : "Existe pelo menos uma interpretação em que todas as premissas são verdadeiras e a conclusão é falsa. Portanto, a conclusão não decorre necessariamente das premissas.";
 
     return {
       ...analysis,
+      tableau: { ...analysis.tableau, countermodel },
       kind: "argument",
       premises: cleanPremises,
       conclusion: cleanConclusion,
@@ -756,7 +958,17 @@
       conclusionFormula,
       validityFormula,
       mapping: [...context.labels].map(([symbol, phrase]) => ({ symbol, phrase })),
-      isValid: analysis.truthTable.classification === "tautology" && analysis.tableau.allClosed,
+      isValid,
+      inferenceRule: detectedRule,
+      validityExplanation,
+      countermodel,
+      countermodelVerified: countermodel ? isArgumentCountermodel(countermodel, premiseAsts, conclusionAst) : null,
+      methodAgreement: {
+        consistent: true,
+        tableaux: tableauValid,
+        truthTable: truthTableValid,
+        semanticEvaluator: semanticValid,
+      },
     };
   }
 

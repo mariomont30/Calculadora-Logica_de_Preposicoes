@@ -367,10 +367,16 @@
     }
 
     function renderCountermodel(result) {
-      const show = result.kind === "argument" ? !result.isValid : result.truthTable.classification !== "tautology";
+      const show = result.kind === "argument"
+        ? !result.isValid && result.countermodelVerified === true && Boolean(result.countermodel)
+        : result.truthTable.classification !== "tautology"
+          && result.countermodelVerified === true
+          && Boolean(result.tableau.countermodel);
       elements.countermodel.hidden = !show;
       if (!show) return;
-      const assignment = result.tableau.countermodel || result.truthTable.rows.find((row) => !row.result)?.assignment || {};
+      const assignment = result.kind === "argument"
+        ? result.countermodel
+        : result.tableau.countermodel || result.truthTable.rows.find((row) => !row.result)?.assignment || {};
       elements.countermodelValues.innerHTML = result.variables.map((variable) => `<span>${escapeHtml(variable)} = ${assignment[variable] ? "V" : "F"}</span>`).join("");
       const text = elements.countermodel.querySelector("small");
       text.textContent = result.kind === "argument"
@@ -382,7 +388,9 @@
       const { classification, trueCount, falseCount, rows } = result.truthTable;
       const info = result.kind === "argument"
         ? {
-            title: result.isValid ? "Argumento válido" : "Argumento inválido",
+            title: result.inferenceRule
+              ? `${result.isValid ? "Válido" : "Inválido"} — ${result.inferenceRule.label}`
+              : `Argumento ${result.isValid ? "válido" : "inválido"}`,
             help: result.isValid ? "A conclusão decorre das premissas." : "Há um contraexemplo para a conclusão.",
           }
         : { title: classificationInfo(classification).title, help: classificationInfo(classification).description };
@@ -448,14 +456,14 @@
       const formulaInfo = classificationInfo(classification);
       const view = result.kind === "argument"
         ? {
-            title: result.isValid ? "Argumento válido" : "Argumento inválido",
+            title: result.inferenceRule
+              ? `${result.isValid ? "Válido" : "Inválido"} — ${result.inferenceRule.label}`
+              : `Argumento ${result.isValid ? "válido" : "inválido"}`,
             symbol: result.isValid ? "✓" : "×",
             className: result.isValid ? "" : "invalid",
             kicker: "Resultado do argumento",
             description: result.isValid ? "A conclusão decorre logicamente das premissas." : "A conclusão não decorre necessariamente das premissas.",
-            explanation: result.isValid
-              ? "Em toda interpretação na qual as premissas são verdadeiras, a conclusão também é verdadeira. O Tableaux fechou todos os ramos."
-              : "Existe pelo menos uma interpretação em que todas as premissas são verdadeiras e a conclusão é falsa. Veja o contraexemplo abaixo.",
+            explanation: result.validityExplanation,
           }
         : { ...formulaInfo, kicker: "Resultado da fórmula" };
 
@@ -514,13 +522,18 @@
     function resultSummary() {
       if (!currentResult) return "";
       if (currentResult.kind === "argument") {
-        return [
+        const lines = [
           `LogiQ — ${currentResult.isValid ? "Argumento válido" : "Argumento inválido"}`,
           ...currentResult.premises.map((premise, index) => `Premissa ${index + 1}: ${premise}`),
           `Conclusão: ${currentResult.conclusion}`,
           `Fórmula de validade: ${currentResult.normalized}`,
           `Tableaux: ${currentResult.tableau.closedCount}/${currentResult.tableau.branches.length} ramos fechados`,
-        ].join("\n");
+        ];
+        if (currentResult.inferenceRule) lines.splice(1, 0, `Regra reconhecida: ${currentResult.inferenceRule.label}`);
+        if (currentResult.countermodelVerified) {
+          lines.push(`Contraexemplo confirmado: ${currentResult.variables.map((variable) => `${variable}=${currentResult.countermodel[variable] ? "V" : "F"}`).join(", ")}`);
+        }
+        return lines.join("\n");
       }
       const label = classificationInfo(currentResult.truthTable.classification).title;
       return `LogiQ — ${label}\nFórmula: ${currentResult.normalized}\nTableaux: ${currentResult.tableau.closedCount}/${currentResult.tableau.branches.length} ramos fechados`;

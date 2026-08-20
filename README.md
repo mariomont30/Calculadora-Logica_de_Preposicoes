@@ -6,7 +6,7 @@ Aplicação web desenvolvida para a atividade AV1 de Lógica Proposicional. O pr
 2. análise sintática de fórmulas bem formuladas (FBF);
 3. prova de tautologia por Tableaux semântico.
 
-Além do método principal, a aplicação testa a validade de argumentos, gera uma tabela-verdade completa, classifica fórmulas como tautologia, contradição ou contingência e apresenta um contraexemplo quando a conclusão não decorre das premissas.
+Além do método principal, a aplicação testa a validade de argumentos, gera uma tabela-verdade completa, classifica fórmulas como tautologia, contradição ou contingência e apresenta um contraexemplo matematicamente confirmado quando a conclusão não decorre das premissas.
 
 ## O que a calculadora faz
 
@@ -15,6 +15,7 @@ Além do método principal, a aplicação testa a validade de argumentos, gera u
 - aceita texto corrido, separando as premissas por ponto e reconhecendo a conclusão após `logo`, `portanto`, `assim`, `conclusão:` ou `∴`;
 - traduz frases para proposições, reutiliza ideias já informadas e mostra a legenda utilizada;
 - testa a validade do argumento por meio da fórmula `(P1 ∧ P2 ∧ ...) → C`;
+- identifica didaticamente regras clássicas de inferência e falácias quando o padrão é inequívoco;
 - mantém um modo exclusivo para análise de fórmulas proposicionais;
 - exibe análise léxica, confirmação de FBF, Tableaux, tabela-verdade e explicação do resultado.
 
@@ -38,6 +39,16 @@ Assim, hoje chove e eu estudo, trabalho e vou à academia.
 Nesse caso, a conclusão é traduzida com as mesmas quatro proposições das premissas, sem criar letras extras. Diferenças entre maiúsculas e minúsculas e a omissão inequívoca de pronomes também são normalizadas. Se um trecho puder apontar para mais de uma proposição ou se uma enumeração estiver incompleta, a calculadora pede que as frases sejam reescritas por extenso em vez de escolher uma interpretação silenciosamente.
 
 O recurso é intencionalmente um **português controlado**: ele não tenta identificar sinônimos, referências contextuais ou equivalências semânticas entre frases diferentes. Essa limitação mantém a tradução previsível e o resultado lógico verificável.
+
+A negação também reutiliza a proposição positiva quando a construção é direta. Por exemplo, se `A` representa `João estuda`, a frase `João não estuda` é traduzida como `¬A`. Construções ambíguas, como `não só`, não são interpretadas silenciosamente.
+
+## Regras didáticas e segurança formal
+
+Quando a estrutura corresponde exatamente a um padrão conhecido, o resultado informa **Modus Ponens**, **Modus Tollens**, **Silogismo Hipotético**, **Silogismo Disjuntivo**, **Afirmação do consequente** ou **Negação do antecedente**. Essa identificação é apenas explicativa: a validade continua sendo calculada pelo Tableaux, pela tabela-verdade e pelo avaliador semântico.
+
+Antes de mostrar um contraexemplo, o programa confirma que todas as premissas são verdadeiras e a conclusão é falsa sob a atribuição apresentada. Se os três métodos não concordarem, a análise é interrompida em vez de exibir um resultado inseguro.
+
+Entradas com quantificadores claros, como `todo`, `algum`, `nenhum` ou `existe`, recebem uma orientação de que dependem de relações internas não representadas pela Lógica Proposicional. O sistema não implementa nem simula Lógica de Predicados.
 
 ## Identidade visual
 
@@ -116,8 +127,11 @@ npm test
 
 A suíte valida:
 
-- 2.017 fórmulas proposicionais e 29.105 asserções lógicas;
+- 2.017 fórmulas proposicionais, 512 argumentos gerados e 34.494 asserções lógicas;
 - argumentos válidos e inválidos, em símbolos e em frases portuguesas;
+- negação interna, reutilização de proposições e estruturas compostas explícitas;
+- identificação das quatro regras válidas e das duas falácias documentadas;
+- recusa didática de quantificadores fora do escopo proposicional;
 - separação de texto por ponto e conectivos de conclusão;
 - combinações exaustivas de negação, conjunção, disjunção, condicional e bicondicional;
 - fórmulas aleatórias profundas com semente determinística;

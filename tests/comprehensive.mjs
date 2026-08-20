@@ -19,6 +19,7 @@ const {
 
 let assertions = 0;
 let formulasChecked = 0;
+let argumentsChecked = 0;
 const startedAt = performance.now();
 
 function check(condition, message) {
@@ -37,6 +38,23 @@ function throwsLogic(action, stage, message, title = null) {
     action,
     (error) => error instanceof LogicError && error.stage === stage && (!title || error.title === title),
     message,
+  );
+}
+
+function verifyArgumentCountermodel(result, label) {
+  equal(result.isValid, false, `${label}: argumento inválido`);
+  equal(result.countermodelVerified, true, `${label}: contraexemplo marcado como confirmado`);
+  result.premiseFormulas.forEach((formula, index) => {
+    equal(
+      evaluate(parse(lex(formula)), result.countermodel),
+      true,
+      `${label}: premissa ${index + 1} verdadeira no contraexemplo`,
+    );
+  });
+  equal(
+    evaluate(parse(lex(result.conclusionFormula)), result.countermodel),
+    false,
+    `${label}: conclusão falsa no contraexemplo`,
   );
 }
 
@@ -89,6 +107,7 @@ function verifyReference(reference, label = refFormula(reference)) {
   });
   if (expectedClass !== "tautology") {
     check(analysis.tableau.countermodel !== null, `${label}: contraexemplo presente`);
+    equal(analysis.countermodelVerified, true, `${label}: contraexemplo confirmado antes da exibição`);
     equal(refEvaluate(reference, analysis.tableau.countermodel), false, `${label}: contraexemplo válido na referência`);
     equal(evaluate(analysis.ast, analysis.tableau.countermodel), false, `${label}: contraexemplo válido no programa`);
   }
@@ -219,6 +238,211 @@ throwsLogic(
   "Enumeração ambígua",
 );
 
+const repeatedAtomicProposition = compileArgument(
+  ["João estuda", "Maria trabalha", "Pedro viajou", "Ana trabalha"],
+  "João estuda",
+);
+equal(repeatedAtomicProposition.premiseFormulas.join(""), "ABCD", "Proposições atômicas recebem letras estáveis");
+equal(repeatedAtomicProposition.conclusionFormula, "A", "Proposição repetida na conclusão conserva a letra A");
+equal(repeatedAtomicProposition.mapping.length, 4, "Repetição não cria uma quinta proposição");
+equal(repeatedAtomicProposition.isValid, true, "Repetição direta produz argumento válido");
+
+const repeatedCompoundPropositions = compileArgument(["João estuda", "Maria trabalha"], "João estuda e Maria trabalha");
+equal(repeatedCompoundPropositions.premiseFormulas.join(""), "AB", "Premissas simples recebem A e B");
+equal(repeatedCompoundPropositions.conclusionFormula, "(A ∧ B)", "Conclusão composta reutiliza A e B");
+equal(repeatedCompoundPropositions.mapping.length, 2, "Conclusão composta não cria novas letras");
+equal(repeatedCompoundPropositions.isValid, true, "Conjunção das premissas é uma conclusão válida");
+
+const internalNegation = compileArgument(["João estuda"], "João não estuda");
+equal(internalNegation.premiseFormulas[0], "A", "Proposição positiva recebe A");
+equal(internalNegation.conclusionFormula, "¬A", "Negação após o sujeito reutiliza A");
+equal(internalNegation.mapping.length, 1, "Negação interna não cria proposição independente");
+verifyArgumentCountermodel(internalNegation, "Negação interna");
+
+const parsedInternalNegation = parseArgumentText("João estuda. Logo, João não estuda.");
+const textInternalNegation = compileArgument(parsedInternalNegation.premises, parsedInternalNegation.conclusion);
+equal(textInternalNegation.conclusionFormula, "¬A", "Texto corrido preserva a negação após o sujeito");
+verifyArgumentCountermodel(textInternalNegation, "Negação interna em texto corrido");
+
+const negativePremiseFirst = compileArgument(["João não estuda"], "João estuda");
+equal(negativePremiseFirst.premiseFormulas[0], "¬A", "Premissa negativa cria a base positiva A");
+equal(negativePremiseFirst.conclusionFormula, "A", "Forma positiva posterior reutiliza A");
+equal(negativePremiseFirst.mapping[0].phrase, "João estuda", "Legenda registra a proposição sem a negação");
+verifyArgumentCountermodel(negativePremiseFirst, "Premissa negativa inicial");
+
+const explicitCompoundPremise = compileArgument(["João estuda e Maria trabalha"], "João estuda");
+equal(explicitCompoundPremise.premiseFormulas[0], "(A ∧ B)", "Conectivo explícito preserva a conjunção");
+equal(explicitCompoundPremise.conclusionFormula, "A", "Conclusão reutiliza a parte esquerda da conjunção");
+equal(explicitCompoundPremise.isValid, true, "Simplificação da conjunção é válida");
+
+const negationInsideCompound = compileArgument(
+  ["João estuda", "Maria trabalha"],
+  "João estuda e Maria não trabalha",
+);
+equal(negationInsideCompound.conclusionFormula, "(A ∧ ¬B)", "Negação interna é preservada dentro da conjunção");
+equal(negationInsideCompound.mapping.length, 2, "Negação composta reutiliza somente A e B");
+verifyArgumentCountermodel(negationInsideCompound, "Negação dentro da conjunção");
+
+const namedModusPonens = compileArgument(
+  ["Se João estuda, então João será aprovado", "João estuda"],
+  "João será aprovado",
+);
+equal(namedModusPonens.premiseFormulas[0], "(A → B)", "Condicional natural preserva A → B");
+equal(namedModusPonens.premiseFormulas[1], "A", "Antecedente natural reutiliza A");
+equal(namedModusPonens.conclusionFormula, "B", "Consequente natural reutiliza B");
+equal(namedModusPonens.isValid, true, "Modus Ponens natural é válido");
+equal(namedModusPonens.inferenceRule?.label, "Modus Ponens", "Modus Ponens é identificado");
+
+const parsedNamedModusPonens = parseArgumentText(
+  "Se João estuda, então João será aprovado. João estuda. Logo, João será aprovado.",
+);
+const textNamedModusPonens = compileArgument(parsedNamedModusPonens.premises, parsedNamedModusPonens.conclusion);
+equal(textNamedModusPonens.premiseFormulas.join(","), "(A → B),A", "Texto corrido preserva as premissas do Modus Ponens");
+equal(textNamedModusPonens.conclusionFormula, "B", "Texto corrido reutiliza o consequente B");
+equal(textNamedModusPonens.inferenceRule?.label, "Modus Ponens", "Texto corrido identifica Modus Ponens");
+
+const reorderedModusPonens = compileArgument(["P", "P → Q"], "Q");
+equal(reorderedModusPonens.inferenceRule?.label, "Modus Ponens", "Modus Ponens independe da ordem das premissas");
+
+const modusPonensWithExtraPremise = compileArgument(["P → Q", "R", "P"], "Q");
+equal(modusPonensWithExtraPremise.isValid, true, "Premissa adicional não altera a validade do Modus Ponens");
+equal(modusPonensWithExtraPremise.inferenceRule?.label, "Modus Ponens", "Regra é reconhecida com premissa adicional");
+
+const namedModusTollens = compileArgument(
+  ["Se João estuda, então João será aprovado", "João não será aprovado"],
+  "João não estuda",
+);
+equal(namedModusTollens.isValid, true, "Modus Tollens natural é válido");
+equal(namedModusTollens.inferenceRule?.label, "Modus Tollens", "Modus Tollens é identificado");
+
+const namedHypotheticalSyllogism = compileArgument(
+  ["Se João estuda, então João será aprovado", "Se João será aprovado, então João comemora"],
+  "Se João estuda, então João comemora",
+);
+equal(namedHypotheticalSyllogism.isValid, true, "Silogismo Hipotético natural é válido");
+equal(namedHypotheticalSyllogism.inferenceRule?.label, "Silogismo Hipotético", "Silogismo Hipotético é identificado");
+
+const reorderedHypotheticalSyllogism = compileArgument(["Q → R", "P → Q"], "P → R");
+equal(reorderedHypotheticalSyllogism.inferenceRule?.label, "Silogismo Hipotético", "Silogismo Hipotético independe da ordem das premissas");
+
+const namedDisjunctiveSyllogism = compileArgument(
+  ["João estuda ou Maria trabalha", "João não estuda"],
+  "Maria trabalha",
+);
+equal(namedDisjunctiveSyllogism.isValid, true, "Silogismo Disjuntivo natural é válido");
+equal(namedDisjunctiveSyllogism.inferenceRule?.label, "Silogismo Disjuntivo", "Silogismo Disjuntivo é identificado");
+
+const namedAffirmingConsequent = compileArgument(
+  ["Se João estuda, então João será aprovado", "João será aprovado"],
+  "João estuda",
+);
+equal(namedAffirmingConsequent.inferenceRule?.label, "Afirmação do consequente", "Afirmação do consequente é identificada");
+verifyArgumentCountermodel(namedAffirmingConsequent, "Afirmação do consequente");
+
+const namedDenyingAntecedent = compileArgument(
+  ["Se João estuda, então João será aprovado", "João não estuda"],
+  "João não será aprovado",
+);
+equal(namedDenyingAntecedent.inferenceRule?.label, "Negação do antecedente", "Negação do antecedente é identificada");
+verifyArgumentCountermodel(namedDenyingAntecedent, "Negação do antecedente");
+
+for (const [result, expectedValidity, label] of [
+  [namedModusPonens, true, "Modus Ponens"],
+  [namedModusTollens, true, "Modus Tollens"],
+  [namedHypotheticalSyllogism, true, "Silogismo Hipotético"],
+  [namedDisjunctiveSyllogism, true, "Silogismo Disjuntivo"],
+  [namedAffirmingConsequent, false, "Afirmação do consequente"],
+  [namedDenyingAntecedent, false, "Negação do antecedente"],
+]) {
+  equal(result.methodAgreement.consistent, true, `${label}: métodos marcados como consistentes`);
+  equal(result.methodAgreement.tableaux, expectedValidity, `${label}: resultado do Tableaux`);
+  equal(result.methodAgreement.truthTable, expectedValidity, `${label}: resultado da tabela-verdade`);
+  equal(result.methodAgreement.semanticEvaluator, expectedValidity, `${label}: resultado do avaliador semântico`);
+}
+
+equal(
+  namedModusPonens.validityExplanation,
+  "Não existe interpretação em que todas as premissas sejam verdadeiras e a conclusão seja falsa. Portanto, a conclusão decorre logicamente das premissas.",
+  "Explicação didática do argumento válido",
+);
+equal(
+  namedAffirmingConsequent.validityExplanation,
+  "Existe pelo menos uma interpretação em que todas as premissas são verdadeiras e a conclusão é falsa. Portanto, a conclusão não decorre necessariamente das premissas.",
+  "Explicação didática do argumento inválido",
+);
+
+const unlabelledValidArgument = compileArgument(["P ∧ Q"], "Q ∧ P");
+equal(unlabelledValidArgument.isValid, true, "Argumento válido não listado continua correto");
+equal(unlabelledValidArgument.inferenceRule, null, "Regra desconhecida não recebe rótulo inventado");
+equal(unlabelledValidArgument.countermodel, null, "Argumento válido não possui contraexemplo");
+
+const tenseSensitiveArgument = compileArgument(
+  ["Se João estuda, então João será aprovado", "João foi aprovado"],
+  "João estudou",
+);
+equal(tenseSensitiveArgument.isValid, false, "Tempos verbais diferentes permanecem proposições distintas");
+equal(tenseSensitiveArgument.mapping.length, 4, "Tradutor não inventa equivalência semântica entre tempos verbais");
+equal(tenseSensitiveArgument.inferenceRule, null, "Tempos verbais diferentes não produzem falsa identificação de regra");
+verifyArgumentCountermodel(tenseSensitiveArgument, "Diferença de tempo verbal");
+
+for (const scopedArgument of [
+  ["Todo médico estudou anatomia", "João é médico"],
+  ["Algum aluno foi aprovado", "João estuda"],
+  ["Nenhum peixe é mamífero", "Baleias são mamíferos"],
+  ["Existe uma pessoa estudiosa", "Maria estuda"],
+  ["Alguém estuda lógica", "Maria estuda"],
+  ["Ninguém faltou à aula", "João estuda"],
+]) {
+  throwsLogic(
+    () => compileArgument(scopedArgument, "João estudou anatomia"),
+    "syntax",
+    `Quantificador fora do escopo: ${scopedArgument[0]}`,
+    "Fora do escopo proposicional",
+  );
+}
+
+throwsLogic(
+  () => compileArgument(["João não só estuda"], "João estuda"),
+  "syntax",
+  "Negação ambígua solicita reformulação",
+  "Negação ambígua",
+);
+throwsLogic(
+  () => compileArgument(["Não só estudo"], "Estudo"),
+  "syntax",
+  "Negação ambígua no início solicita reformulação",
+  "Negação ambígua",
+);
+for (const incompleteNegation of ["Não", "João não"]) {
+  throwsLogic(
+    () => compileArgument([incompleteNegation], "João estuda"),
+    "syntax",
+    `Negação incompleta: ${incompleteNegation}`,
+    "Negação incompleta",
+  );
+}
+
+// Matriz determinística de argumentos: concordância dos métodos e contraexemplos.
+const argumentFormulaPool = ["P", "Q", "¬P", "¬Q", "P → Q", "Q → P", "P ∧ Q", "P ∨ Q"];
+for (const firstPremise of argumentFormulaPool) {
+  for (const secondPremise of argumentFormulaPool) {
+    for (const generatedConclusion of argumentFormulaPool) {
+      const label = `${firstPremise}, ${secondPremise} ∴ ${generatedConclusion}`;
+      const generatedArgument = compileArgument([firstPremise, secondPremise], generatedConclusion);
+      equal(generatedArgument.methodAgreement.consistent, true, `${label}: métodos consistentes`);
+      equal(generatedArgument.methodAgreement.tableaux, generatedArgument.isValid, `${label}: Tableaux`);
+      equal(generatedArgument.methodAgreement.truthTable, generatedArgument.isValid, `${label}: tabela-verdade`);
+      equal(generatedArgument.methodAgreement.semanticEvaluator, generatedArgument.isValid, `${label}: avaliador semântico`);
+      if (generatedArgument.isValid) {
+        equal(generatedArgument.countermodel, null, `${label}: argumento válido sem contraexemplo`);
+      } else {
+        verifyArgumentCountermodel(generatedArgument, label);
+      }
+      argumentsChecked += 1;
+    }
+  }
+}
+
 const invalidLexical = ["", "   ", "P + Q", "P @ Q", "P = Q", "P # Q", "P => Q", "P;Q", "P₂", "<script>"];
 for (const source of invalidLexical) throwsLogic(() => lex(source), "lexical", `Erro léxico: ${source}`);
 
@@ -310,4 +534,4 @@ equal(directTruth.rows.length, 8, "API direta da tabela-verdade");
 check(directTableau.branches.length >= 1, "API direta do Tableaux");
 
 const elapsed = Math.round(performance.now() - startedAt);
-console.log(`OK — ${formulasChecked.toLocaleString("pt-BR")} fórmulas, ${assertions.toLocaleString("pt-BR")} verificações lógicas em ${elapsed} ms.`);
+console.log(`OK — ${formulasChecked.toLocaleString("pt-BR")} fórmulas, ${argumentsChecked.toLocaleString("pt-BR")} argumentos gerados e ${assertions.toLocaleString("pt-BR")} verificações lógicas em ${elapsed} ms.`);

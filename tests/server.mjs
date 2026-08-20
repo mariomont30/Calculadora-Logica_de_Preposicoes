@@ -29,6 +29,13 @@ assert.match(home, /styles\.css/, "HTML referencia o CSS");
 assert.match(home, /app\.js/, "HTML referencia o JavaScript");
 assert.match(home, /ui\.js/, "HTML referencia a interface moderna");
 
+const builtCore = await (await request("/app.js")).text();
+const builtUi = await (await request("/ui.js")).text();
+assert.match(builtCore, /identifyInferenceRule/, "Build contém identificação de regras de inferência");
+assert.match(builtCore, /isArgumentCountermodel/, "Build contém validação de contraexemplo");
+assert.match(builtCore, /ensurePropositionalScope/, "Build contém proteção do escopo proposicional");
+assert.match(builtUi, /countermodelVerified/, "Build da interface exige contraexemplo confirmado");
+
 const head = await request("/app.js", "HEAD");
 assert.equal(head.status, 200, "HEAD retorna sucesso");
 assert.equal((await head.text()).length, 0, "HEAD não retorna corpo");

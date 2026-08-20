@@ -41,6 +41,13 @@ assert.doesNotMatch(html, /https?:\/\//i, "Interface não deve depender de CDN e
 assert.doesNotMatch(`${core}\n${ui}`, /\beval\s*\(/, "Aplicação não deve executar código dinâmico");
 assert.match(ui, /const escapeHtml =/, "Função de escape de HTML presente");
 assert.match(ui, /escapeHtml\(result\.normalized\)/, "Fórmula escapada antes da renderização");
+assert.match(core, /function identifyInferenceRule\(/, "Identificação didática de regras presente");
+assert.match(core, /function isArgumentCountermodel\(/, "Validação específica de contraexemplo presente");
+assert.match(core, /function ensurePropositionalScope\(/, "Detecção de entrada fora do escopo presente");
+assert.match(core, /function controlledNegationTarget\(/, "Negação em português controlado presente");
+assert.match(ui, /result\.inferenceRule\.label/, "Regra reconhecida apresentada no resultado");
+assert.match(ui, /result\.validityExplanation/, "Explicação formal de validade apresentada");
+assert.match(ui, /result\.countermodelVerified === true/, "Interface exige contraexemplo confirmado");
 
 for (const member of ["Mário Monteiro", "Bruno Gonçalves", "Ana Gabriella", "José Cleidson"]) {
   assert.match(html, new RegExp(member), `Integrante fixo ausente: ${member}`);
