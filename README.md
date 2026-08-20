@@ -1,89 +1,120 @@
 # LogiQ — Calculadora de Lógica Proposicional
 
-Aplicação web desenvolvida para a atividade AV1 de Lógica Proposicional. O projeto implementa as três etapas solicitadas no enunciado:
+> Análise de fórmulas e argumentos proposicionais de maneira simples, visual e verificável.
 
-1. análise léxica dos símbolos;
-2. análise sintática de fórmulas bem formuladas (FBF);
-3. prova de tautologia por Tableaux semântico.
+## 1. Apresentação
 
-Além do método principal, a aplicação testa a validade de argumentos, gera uma tabela-verdade completa, classifica fórmulas como tautologia, contradição ou contingência e apresenta um contraexemplo matematicamente confirmado quando a conclusão não decorre das premissas.
+O **LogiQ** é uma calculadora web para estudar Lógica Proposicional. Ela recebe fórmulas simbólicas ou frases em português controlado, constrói a Fórmula Bem Formulada (FBF) e apresenta cada etapa da análise.
 
-## O que a calculadora faz
+A validação combina **Tableaux semântico**, **tabela-verdade** e um **avaliador independente**. Quando um argumento é inválido, a calculadora mostra um contraexemplo confirmado.
 
-- cria campos dinâmicos para **Premissa 1, Premissa 2, ...** e uma conclusão;
-- aceita fórmulas simbólicas ou frases em português controlado nos mesmos campos;
-- aceita texto corrido, separando as premissas por ponto e reconhecendo a conclusão após `logo`, `portanto`, `assim`, `conclusão:` ou `∴`;
-- traduz frases para proposições, reutiliza ideias já informadas e mostra a legenda utilizada;
-- testa a validade do argumento por meio da fórmula `(P1 ∧ P2 ∧ ...) → C`;
-- identifica didaticamente regras clássicas de inferência e falácias quando o padrão é inequívoco;
-- mantém um modo exclusivo para análise de fórmulas proposicionais;
-- exibe análise léxica, confirmação de FBF, Tableaux, tabela-verdade e explicação do resultado.
+## 2. Links do projeto
 
-Exemplo de texto corrido:
+### 🌐 [Abrir a apresentação da calculadora](https://mariomont30.github.io/Calculadora-Logica_de_Preposicoes/)
 
-```text
-Se estudo, então sou aprovado. Estudo. Logo, sou aprovado.
-```
+### 💻 [Acessar o código-fonte no GitHub](https://github.com/mariomont30/Calculadora-Logica_de_Preposicoes)
 
-Conectivos escritos aceitos nas frases: `não`, `e`, `ou`, `se..., então...` e `se e somente se`.
+## 3. Principais funcionalidades
 
-O tradutor respeita a mesma precedência do modo simbólico (`¬`, `∧`, `∨`, `→`, `↔`) e reconhece parênteses em expressões controladas. Assim, `(A ou B) e C` permanece diferente de `A ou (B e C)`. Também são aceitos antecedentes e consequentes compostos, como `Se o sensor está ativo e a porta está aberta, então o alarme dispara`.
+- análise léxica dos símbolos proposicionais;
+- validação sintática de FBFs;
+- prova de tautologia por Tableaux;
+- geração da tabela-verdade;
+- classificação em tautologia, contradição ou contingência;
+- validação de argumentos e contraexemplos;
+- tradução de português controlado;
+- entrada por campos separados ou texto corrido;
+- reconhecimento de regras de inferência;
+- temas claro e escuro;
+- interface responsiva para computador e celular.
 
-Como o conteúdo é de lógica **proposicional**, uma frase completa é tratada como uma proposição atômica. O programa reconhece relações escritas explicitamente com esses conectivos e reaproveita proposições anteriores quando a conclusão omite um sujeito, verbo ou complemento de forma inequívoca.
-
-Exemplo de reaproveitamento correto:
-
-```text
-Hoje chove. Eu estudo. Eu trabalho. Eu vou à academia.
-Assim, hoje chove e eu estudo, trabalho e vou à academia.
-```
-
-Nesse caso, a conclusão é traduzida com as mesmas quatro proposições das premissas, sem criar letras extras. Diferenças entre maiúsculas e minúsculas e a omissão inequívoca de pronomes também são normalizadas. Se um trecho puder apontar para mais de uma proposição ou se uma enumeração estiver incompleta, a calculadora pede que as frases sejam reescritas por extenso em vez de escolher uma interpretação silenciosamente.
-
-O recurso é intencionalmente um **português controlado**: ele não tenta identificar sinônimos, referências contextuais ou equivalências semânticas entre frases diferentes. Quando a estrutura não puder ser determinada de modo inequívoco, a calculadora solicita a reescrita de cada lado do conectivo como uma proposição completa. Essa limitação mantém a tradução previsível e o resultado lógico verificável.
-
-A negação também reutiliza a proposição positiva quando a construção é direta. Por exemplo, se `A` representa `João estuda`, a frase `João não estuda` é traduzida como `¬A`. Construções ambíguas, como `não só`, não são interpretadas silenciosamente.
-
-## Regras didáticas e segurança formal
-
-Quando a estrutura corresponde exatamente a um padrão conhecido, o resultado informa **Modus Ponens**, **Modus Tollens**, **Silogismo Hipotético**, **Silogismo Disjuntivo**, **Simplificação**, **Conjunção**, **Afirmação do consequente** ou **Negação do antecedente**. Essa identificação é apenas explicativa: a validade continua sendo calculada pelo Tableaux, pela tabela-verdade e pelo avaliador semântico.
-
-Antes de mostrar um contraexemplo, o programa confirma que todas as premissas são verdadeiras e a conclusão é falsa sob a atribuição apresentada. Se os três métodos não concordarem, a análise é interrompida em vez de exibir um resultado inseguro.
-
-Entradas com quantificadores claros, como `todo`, `algum`, `nenhum` ou `existe`, recebem uma orientação de que dependem de relações internas não representadas pela Lógica Proposicional. O sistema não implementa nem simula Lógica de Predicados.
-
-## Identidade visual
-
-A interface utiliza uma linguagem acadêmica inspirada em materiais de estudo:
-
-- **tema claro:** papel em tom marfim, pautas discretas, azul universitário e verde para conclusões;
-- **tema escuro:** lousa em verde-grafite, texto em branco quente e detalhes suaves, sem efeitos neon;
-- fórmulas e títulos usam tipografia editorial, enquanto controles permanecem simples e legíveis;
-- resultados, Tableaux, tabela-verdade e análise léxica são apresentados como partes de um relatório acadêmico;
-- o seletor no cabeçalho permite alternar entre os temas claro e escuro, mantendo a preferência salva no navegador.
-
-Essa identidade visual não altera o funcionamento lógico, a estrutura dos campos da calculadora nem os resultados.
-
-## Equipe
+## 4. Equipe
 
 **Disciplina:** Res problemas nat discreta
 
 - Mário Monteiro
 - Bruno Gonçalves
 - Ana Gabriella
-- José Cleidson 
+- José Cleidson
 
-## Link da apresentação
+**Responsável pelo repositório:** Mário_DEV
 
-**Apresentação — GitHub Pages:** https://mariomont30.github.io/Calculadora-Logica_de_Preposicoes/
+## 5. Como utilizar
 
-**Código-fonte:** https://github.com/mariomont30/Calculadora-Logica_de_Preposicoes
+### Argumento por campos
 
-## Como executar
+Preencha as premissas, informe a conclusão e clique em **Verificar validade do argumento**. Novos campos podem ser adicionados quando necessário.
 
-Não é necessário instalar dependências. Abra `index.html` em um navegador moderno.
+### Argumento em texto corrido
 
-Para servir localmente com Python:
+Separe as premissas por ponto e indique a conclusão com `logo`, `portanto`, `assim`, `conclusão:` ou `∴`.
+
+```text
+Se estudo, então sou aprovado. Estudo. Logo, sou aprovado.
+```
+
+Tradução produzida:
+
+```text
+A → B, A ∴ B
+```
+
+### Fórmula proposicional
+
+Na aba **Fórmula**, digite diretamente uma expressão como:
+
+```text
+((P → Q) ∧ P) → Q
+```
+
+## 6. Entradas aceitas
+
+| Operação | Símbolo | Alternativas |
+|---|:---:|:---:|
+| Negação | `¬` | `~`, `!`, `∼` |
+| Conjunção | `∧` | `^`, `&` |
+| Disjunção | `∨` | `v`, `\|` |
+| Condicional | `→` | `->` |
+| Bicondicional | `↔` | `<->` |
+
+Em português controlado, são reconhecidos `não`, `e`, `ou`, `se..., então...` e `se e somente se`.
+
+O tradutor respeita a precedência `¬ > ∧ > ∨ > → > ↔`, preserva parênteses e reutiliza proposições já registradas. Se uma construção for ambígua, o sistema solicita sua reescrita em vez de escolher uma interpretação silenciosamente.
+
+## 7. Resultados apresentados
+
+A análise pode exibir:
+
+- legenda das proposições e FBF resultante;
+- análise léxica e confirmação sintática;
+- desenvolvimento do Tableaux;
+- tabela-verdade completa;
+- classificação da fórmula ou validade do argumento;
+- regra de inferência reconhecida;
+- contraexemplo com premissas verdadeiras e conclusão falsa.
+
+Entre as regras didáticas estão Modus Ponens, Modus Tollens, Silogismo Hipotético, Silogismo Disjuntivo, Simplificação e Conjunção. As falácias da Afirmação do consequente e da Negação do antecedente também podem ser identificadas.
+
+O projeto trabalha exclusivamente com **Lógica Proposicional** e não tenta simular Lógica de Predicados.
+
+## 8. Testes e confiabilidade
+
+A suíte automatizada verifica:
+
+- **2.023 fórmulas proposicionais**;
+- **554 argumentos**;
+- **34.722 verificações lógicas**;
+- os 14 cenários funcionais obrigatórios;
+- fórmulas aleatórias reproduzíveis e até 256 interpretações;
+- concordância entre Tableaux, tabela-verdade e avaliador independente;
+- validade de todos os contraexemplos;
+- interface, acessibilidade, build e servidor.
+
+Consulte o [`RELATORIO-DE-TESTES.md`](RELATORIO-DE-TESTES.md) para ver as FBFs, os resultados e os contraexemplos dos 14 cenários.
+
+## 9. Executar localmente
+
+Abra `index.html` em um navegador moderno ou inicie um servidor local:
 
 ```bash
 python -m http.server 8080
@@ -91,60 +122,18 @@ python -m http.server 8080
 
 Depois, acesse `http://localhost:8080`.
 
-## Símbolos aceitos
-
-| Operação | Símbolo principal | Alternativas |
-|---|---:|---:|
-| Negação | `¬` | `~`, `!`, `∼` |
-| Conjunção | `∧` | `^`, `&` |
-| Disjunção | `∨` | `v`, `|` |
-| Condicional | `→` | `->` |
-| Bicondicional | `↔` | `<->` |
-
-As proposições são representadas por letras de `A` a `Z`. O `v` minúsculo é interpretado como disjunção, como na notação `PvQ` do enunciado.
-
-## Método de Tableaux
-
-O programa usa Tableaux semântico assinado. Para testar se uma fórmula `φ` é tautologia, o algoritmo inicia com `F φ`, isto é, supõe a fórmula falsa. Em seguida, aplica regras lineares (α) e ramificadas (β). Um ramo fecha ao conter simultaneamente `T P` e `F P` para alguma proposição `P`.
-
-- se todos os ramos fecham, `φ` é tautologia;
-- se existe um ramo aberto, os seus literais fornecem um contraexemplo para `φ`.
-
-## Estrutura
-
-- `index.html`: conteúdo e estrutura semântica da interface;
-- `styles.css`: identidade visual, responsividade, tema e impressão;
-- `app.js`: analisadores, tradutor de frases, avaliador, tabela-verdade e Tableaux;
-- `ui.js`: comportamento da interface, premissas dinâmicas e apresentação dos resultados.
-
-Todo o processamento ocorre localmente no navegador e nenhum dado é enviado para servidores externos.
-
-## Testes automatizados
-
-A entrega inclui uma suíte reproduzível, sem dependências externas. Para executá-la:
+Para executar todos os testes:
 
 ```bash
 npm test
 ```
 
-A suíte valida:
+Arquivos principais:
 
-- 2.023 fórmulas proposicionais, 554 argumentos e 34.722 verificações lógicas;
-- os 14 cenários funcionais obrigatórios em texto corrido, com suas FBFs, regras e contraexemplos;
-- argumentos válidos e inválidos, em símbolos e em frases portuguesas;
-- precedência, parênteses, conectivos repetidos, negação dupla e negação de fórmulas compostas;
-- negação interna, reutilização de proposições, sujeito compartilhado e estruturas compostas explícitas;
-- identificação das seis regras válidas e das duas falácias documentadas;
-- rejeição segura de estruturas ambíguas, conectivos incompletos e parênteses incorretos;
-- recusa didática de quantificadores fora do escopo proposicional;
-- separação de texto por ponto e conectivos de conclusão;
-- combinações exaustivas de negação, conjunção, disjunção, condicional e bicondicional;
-- fórmulas aleatórias profundas com semente determinística;
-- equivalência entre Tableaux, tabela-verdade e um avaliador de referência independente;
-- validade de todos os contraexemplos produzidos;
-- aliases, precedência, associatividade e mensagens de erro;
-- fórmulas com até oito proposições e 256 interpretações;
-- integridade da interface, acessibilidade, responsividade e segurança da renderização;
-- build de produção, rotas, tipos MIME, requisições HEAD, página 404 e cabeçalhos de segurança.
+- `index.html`: estrutura da interface;
+- `styles.css`: temas e responsividade;
+- `app.js`: tradução, parser e motores lógicos;
+- `ui.js`: interação e apresentação dos resultados;
+- `tests/`: testes automatizados.
 
-Os resultados completos, incluindo as 14 FBFs e os contraexemplos validados, estão em [`RELATORIO-DE-TESTES.md`](RELATORIO-DE-TESTES.md).
+Todo o processamento ocorre localmente no navegador. Nenhuma fórmula ou frase é enviada para servidores externos.
