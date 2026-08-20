@@ -496,6 +496,23 @@
       .replace(/\s+/gu, " ");
   }
 
+  function naturalKey(value) {
+    return cleanSentence(value)
+      .normalize("NFC")
+      .toLocaleLowerCase("pt-BR")
+      .replace(/[.!?]+$/gu, "")
+      .replace(/\s*,\s*/gu, ", ")
+      .replace(/\s+/gu, " ");
+  }
+
+  function subjectlessNaturalKey(value) {
+    return naturalKey(value).replace(/^(?:eu|tu|ele|ela|n[oó]s|v[oó]s|voc[eê]s?|eles|elas|a\s+gente)\s+/iu, "");
+  }
+
+  function hasExplicitPersonalSubject(value) {
+    return /^(?:eu|tu|ele|ela|n[oó]s|v[oó]s|voc[eê]s?|eles|elas|a\s+gente)\s+/iu.test(naturalKey(value));
+  }
+
   function parseArgumentText(source) {
     if (typeof source !== "string" || source.trim() === "") {
       throw new LogicError("syntax", "Digite as premissas e indique a conclusão com “logo”, “portanto”, “assim”, “conclusão:” ou ∴.", 0, "O argumento está vazio");
@@ -558,6 +575,95 @@
     return letter;
   }
 
+  function knownAtomCandidates(source, context, allowEllipsis = false) {
+    const key = naturalKey(source);
+    if (!key) return [];
+
+    const candidates = new Map();
+    const addCandidate = (symbol) => {
+      if (symbol) candidates.set(symbol, symbol);
+    };
+
+    addCandidate(context.atoms.get(key));
+    if (candidates.size > 0) return [...candidates.values()];
+
+    const subjectless = subjectlessNaturalKey(key);
+    const hasExplicitSubject = hasExplicitPersonalSubject(key);
+    if (!hasExplicitSubject) {
+      context.atoms.forEach((symbol, knownKey) => {
+        if (subjectlessNaturalKey(knownKey) === subjectless) addCandidate(symbol);
+      });
+    }
+    if (candidates.size > 0 || !allowEllipsis) return [...candidates.values()];
+
+    context.atoms.forEach((symbol, knownKey) => {
+      const matchesFullSuffix = knownKey.endsWith(` ${key}`);
+      const matchesOmittedSuffix = !hasExplicitSubject
+        && subjectlessNaturalKey(knownKey).endsWith(` ${subjectless}`);
+      if (matchesFullSuffix || matchesOmittedSuffix) {
+        addCandidate(symbol);
+      }
+    });
+    return [...candidates.values()];
+  }
+
+  function resolveKnownAtom(source, context, { allowEllipsis = false, failOnAmbiguity = false } = {}) {
+    const candidates = knownAtomCandidates(source, context, allowEllipsis);
+    if (candidates.length === 1) return candidates[0];
+    if (candidates.length > 1 && failOnAmbiguity) {
+      throw new LogicError(
+        "syntax",
+        `O trecho “${cleanSentence(source)}” pode representar mais de uma proposição já informada. Repita a frase completa para indicar qual delas deve ser usada.`,
+        0,
+        "Referência ambígua",
+      );
+    }
+    return null;
+  }
+
+  function reduceNaturalFormulas(parts, symbol) {
+    return parts.slice(1).reduce((formula, part) => `(${formula} ${symbol} ${part})`, parts[0]);
+  }
+
+  function splitNaturalCoordination(expression, symbol) {
+    const pattern = symbol === "∧" ? /\s*(?:,|\s+e\s+)\s*/iu : /\s+ou\s+/iu;
+    return expression.split(pattern).map(cleanSentence).filter(Boolean);
+  }
+
+  function tryKnownCoordination(expression, context, symbol) {
+    const parts = splitNaturalCoordination(expression, symbol);
+    if (parts.length < 2) return null;
+
+    const formulas = parts.map((part) => resolveKnownAtom(part, context, {
+      allowEllipsis: true,
+      failOnAmbiguity: true,
+    }));
+    return formulas.every(Boolean) ? reduceNaturalFormulas(formulas, symbol) : null;
+  }
+
+  const commonFiniteVerbs = new Set([
+    "acho", "acredito", "aprendo", "aprende", "aprendem", "aprovo", "aprova", "aprovam",
+    "canto", "canta", "cantam", "chego", "chega", "chegam", "chove", "comemoro", "comemora",
+    "comemoram", "compro", "compra", "compram", "concluo", "conclui", "concluem", "corro", "corre",
+    "correm", "danço", "dança", "dançam", "durmo", "dorme", "dormem", "estudo", "estuda", "estudam",
+    "faço", "faz", "fazem", "fica", "ficam", "fui", "foi", "foram", "gosto", "gosta", "gostam",
+    "leio", "lê", "leem", "posso", "pode", "podem", "quero", "quer", "querem", "sei", "sabe",
+    "sabem", "sou", "és", "é", "somos", "são", "tenho", "tem", "têm", "trabalho", "trabalha",
+    "trabalham", "treino", "treina", "treinam", "viajo", "viaja", "viajam", "vou", "vai", "vamos", "vão",
+  ]);
+
+  function looksLikeNaturalClause(source, context) {
+    const expression = cleanSentence(source);
+    if (!expression) return false;
+    if (trySymbolicFormula(expression)) return true;
+    if (resolveKnownAtom(expression, context, { allowEllipsis: true })) return true;
+    if (/^(?:n[aã]o)\s+/iu.test(expression)) return true;
+    if (/^(?:eu|tu|ele|ela|n[oó]s|voc[eê]s?|eles|elas|a\s+gente)\s+/iu.test(expression)) return true;
+
+    const words = naturalKey(expression).split(/[^\p{L}]+/u).filter(Boolean);
+    return words.some((word) => commonFiniteVerbs.has(word));
+  }
+
   function translateNaturalExpression(source, context) {
     const expression = cleanSentence(source);
     if (!expression) {
@@ -566,6 +672,9 @@
 
     const symbolic = trySymbolicFormula(expression);
     if (symbolic) return symbolic.normalized;
+
+    const knownAtom = resolveKnownAtom(expression, context, { failOnAmbiguity: true });
+    if (knownAtom) return knownAtom;
 
     const conditional = expression.match(/^se\s+(.+?)(?:,\s*|\s+)ent[aã]o\s+(.+)$/iu);
     if (conditional) {
@@ -581,20 +690,31 @@
       return `(${translateNaturalExpression(left, context)} ↔ ${translateNaturalExpression(right, context)})`;
     }
 
+    for (const symbol of ["∨", "∧"]) {
+      const knownCoordination = tryKnownCoordination(expression, context, symbol);
+      if (knownCoordination) return knownCoordination;
+    }
+
+    if (expression.includes(",")) {
+      throw new LogicError(
+        "syntax",
+        "Não foi possível relacionar todos os itens da enumeração com proposições já informadas. Escreva cada ideia como uma frase completa para eliminar a ambiguidade.",
+        0,
+        "Enumeração ambígua",
+      );
+    }
+
     for (const [pattern, symbol] of [[/\s+ou\s+/iu, "∨"], [/\s+e\s+/iu, "∧"]]) {
       const parts = expression.split(pattern).map(cleanSentence).filter(Boolean);
-      if (parts.length > 1) {
-        return parts.slice(1).reduce(
-          (formula, part) => `(${formula} ${symbol} ${translateNaturalExpression(part, context)})`,
-          translateNaturalExpression(parts[0], context),
-        );
+      if (parts.length > 1 && parts.every((part) => looksLikeNaturalClause(part, context))) {
+        return reduceNaturalFormulas(parts.map((part) => translateNaturalExpression(part, context)), symbol);
       }
     }
 
     const negation = expression.match(/^(?:n[aã]o)\s+(.+)$/iu);
     if (negation) return `¬${translateNaturalExpression(negation[1], context)}`;
 
-    const key = expression.toLocaleLowerCase("pt-BR");
+    const key = naturalKey(expression);
     if (!context.atoms.has(key)) {
       const proposition = nextProposition(context);
       context.atoms.set(key, proposition);

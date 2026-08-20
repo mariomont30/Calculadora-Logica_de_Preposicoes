@@ -1,13 +1,13 @@
 # Relatório de testes — LogiQ
 
 **Projeto:** Provador de Fórmulas Proposicionais  
-**Versão testada:** 1.0.0  
-**Data:** 19 de agosto de 2026  
+**Versão testada:** 1.1.0<br>
+**Data:** 20 de agosto de 2026<br>
 **Resultado geral:** APROVADO
 
 ## Resumo executivo
 
-A calculadora foi submetida a uma suíte automatizada e determinística. Foram analisadas **2.017 fórmulas** e realizadas **29.105 verificações lógicas**. Todos os testes terminaram com sucesso.
+A calculadora foi submetida a uma suíte automatizada e determinística. Foram analisadas **2.017 fórmulas** e realizadas **29.129 verificações lógicas**. Todos os testes terminaram com sucesso.
 
 Embora o conjunto de todas as fórmulas proposicionais seja infinito e, portanto, não possa ser percorrido literalmente, a estratégia combina testes exaustivos sobre uma base representativa, leis clássicas, casos-limite e geração aleatória reproduzível de fórmulas profundas.
 
@@ -26,6 +26,8 @@ Embora o conjunto de todas as fórmulas proposicionais seja infinito e, portanto
 | Classificação | Tautologia, contradição e contingência | Aprovado |
 | Argumentos | Premissas dinâmicas, conclusão e fórmula de validade | Aprovado |
 | Frases | Tradução de `não`, `e`, `ou`, `se... então` e bicondicional | Aprovado |
+| Português controlado | Reutilização de proposições, sujeito omitido, coordenações e normalização de caixa | Aprovado |
+| Ambiguidade | Referências múltiplas e enumerações incompletas são recusadas com orientação | Aprovado |
 | Texto corrido | Pontos e conectivos `logo`, `portanto`, `assim`, `conclusão:` e `∴` | Aprovado |
 | Validade | Modus Ponens, silogismo hipotético, silogismo disjuntivo e bicondicional | Aprovado |
 | Invalidade | Afirmação do consequente com contraexemplo verificável | Aprovado |
@@ -72,8 +74,8 @@ npm test
 Saída esperada:
 
 ```text
-OK — 2.017 fórmulas, 29.105 verificações lógicas.
-OK — interface: 66 IDs, 4 abas e acessibilidade/estrutura aprovadas.
+OK — 2.017 fórmulas, 29.129 verificações lógicas.
+OK — interface: 63 IDs, 4 abas e acessibilidade/estrutura aprovadas.
 OK — servidor: rotas, tipos MIME, HEAD, 404 e cabeçalhos aprovados.
 ```
 

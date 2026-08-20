@@ -11,9 +11,9 @@ Além do método principal, a aplicação testa a validade de argumentos, gera u
 ## O que a calculadora faz
 
 - cria campos dinâmicos para **Premissa 1, Premissa 2, ...** e uma conclusão;
-- aceita fórmulas simbólicas ou frases simples em português nos mesmos campos;
+- aceita fórmulas simbólicas ou frases em português controlado nos mesmos campos;
 - aceita texto corrido, separando as premissas por ponto e reconhecendo a conclusão após `logo`, `portanto`, `assim`, `conclusão:` ou `∴`;
-- traduz frases para proposições e mostra a legenda utilizada;
+- traduz frases para proposições, reutiliza ideias já informadas e mostra a legenda utilizada;
 - testa a validade do argumento por meio da fórmula `(P1 ∧ P2 ∧ ...) → C`;
 - mantém um modo exclusivo para análise de fórmulas proposicionais;
 - exibe análise léxica, confirmação de FBF, Tableaux, tabela-verdade e explicação do resultado.
@@ -26,7 +26,18 @@ Se estudo, então sou aprovado. Estudo. Logo, sou aprovado.
 
 Conectivos escritos aceitos nas frases: `não`, `e`, `ou`, `se..., então...` e `se e somente se`.
 
-Como o conteúdo é de lógica **proposicional**, uma frase completa é tratada como uma proposição atômica. O programa reconhece relações que tenham sido escritas explicitamente com esses conectivos; ele não tenta deduzir a estrutura interna de predicados da linguagem natural.
+Como o conteúdo é de lógica **proposicional**, uma frase completa é tratada como uma proposição atômica. O programa reconhece relações escritas explicitamente com esses conectivos e reaproveita proposições anteriores quando a conclusão omite um sujeito, verbo ou complemento de forma inequívoca.
+
+Exemplo de reaproveitamento correto:
+
+```text
+Hoje chove. Eu estudo. Eu trabalho. Eu vou à academia.
+Assim, hoje chove e eu estudo, trabalho e vou à academia.
+```
+
+Nesse caso, a conclusão é traduzida com as mesmas quatro proposições das premissas, sem criar letras extras. Diferenças entre maiúsculas e minúsculas e a omissão inequívoca de pronomes também são normalizadas. Se um trecho puder apontar para mais de uma proposição ou se uma enumeração estiver incompleta, a calculadora pede que as frases sejam reescritas por extenso em vez de escolher uma interpretação silenciosamente.
+
+O recurso é intencionalmente um **português controlado**: ele não tenta identificar sinônimos, referências contextuais ou equivalências semânticas entre frases diferentes. Essa limitação mantém a tradução previsível e o resultado lógico verificável.
 
 ## Identidade visual
 

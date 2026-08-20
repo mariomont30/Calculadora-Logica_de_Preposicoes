@@ -31,9 +31,13 @@ function equal(actual, expected, message) {
   assert.equal(actual, expected, message);
 }
 
-function throwsLogic(action, stage, message) {
+function throwsLogic(action, stage, message, title = null) {
   assertions += 1;
-  assert.throws(action, (error) => error instanceof LogicError && error.stage === stage, message);
+  assert.throws(
+    action,
+    (error) => error instanceof LogicError && error.stage === stage && (!title || error.title === title),
+    message,
+  );
 }
 
 function assignmentsFor(variables) {
@@ -150,6 +154,70 @@ equal(biconditionalPhrase.isValid, true, "Bicondicional em português é reconhe
 const mixedArgument = compileArgument(["P → Q", "Estudo"], "Estudo");
 equal(mixedArgument.isValid, true, "Entradas simbólicas e frases podem ser combinadas");
 equal(mixedArgument.mapping[0].symbol, "A", "Tradução evita colisão com P e Q já usados");
+
+const parsedCoordinatedArgument = parseArgumentText(
+  "Hoje chove. Eu estudo. Eu trabalho. Eu vou à academia. Assim, hoje chove e eu estudo, trabalho e vou à academia.",
+);
+const coordinatedArgument = compileArgument(parsedCoordinatedArgument.premises, parsedCoordinatedArgument.conclusion);
+equal(coordinatedArgument.isValid, true, "Enumeração na conclusão reutiliza as proposições das premissas");
+equal(coordinatedArgument.premiseFormulas.join(""), "ABCD", "Quatro premissas recebem quatro proposições");
+equal(coordinatedArgument.conclusionFormula, "(((A ∧ B) ∧ C) ∧ D)", "Sujeitos omitidos são recuperados sem criar letras extras");
+equal(coordinatedArgument.mapping.length, 4, "A enumeração não cria proposições E e F");
+equal(coordinatedArgument.variables.join(""), "ABCD", "A fórmula corrigida usa somente A, B, C e D");
+
+const omittedFirstPerson = compileArgument(["Eu estudo", "Eu trabalho"], "Estudo e trabalho");
+equal(omittedFirstPerson.isValid, true, "Pronome de primeira pessoa pode ser omitido na conclusão");
+equal(omittedFirstPerson.mapping.length, 2, "Omissão do pronome preserva duas proposições");
+
+const omittedThirdPerson = compileArgument(["Ele estuda"], "Estuda");
+equal(omittedThirdPerson.isValid, true, "Pronome de terceira pessoa pode ser omitido quando a referência é única");
+equal(omittedThirdPerson.mapping.length, 1, "Omissão inequívoca do sujeito preserva uma proposição");
+
+const sharedCopula = compileArgument(["Maria é médica", "Maria é professora"], "Maria é médica e professora");
+equal(sharedCopula.isValid, true, "Complemento após cópula reutiliza a proposição correspondente");
+equal(sharedCopula.mapping.length, 2, "Cópula compartilhada não cria uma terceira proposição");
+
+const sharedVerb = compileArgument(["Pedro compra pão", "Pedro compra leite"], "Pedro compra pão e leite");
+equal(sharedVerb.isValid, true, "Objeto coordenado reutiliza as proposições completas");
+equal(sharedVerb.mapping.length, 2, "Verbo compartilhado não cria uma terceira proposição");
+
+const compoundSubject = compileArgument(["Ana e Bruno estudam"], "Ana e Bruno estudam");
+equal(compoundSubject.isValid, true, "Sujeito composto repetido continua sendo uma proposição atômica");
+equal(compoundSubject.mapping.length, 1, "Nomes unidos por e não são separados como fórmulas");
+
+const compoundObject = compileArgument(["Pedro compra pão e leite"], "Pedro compra pão e leite");
+equal(compoundObject.isValid, true, "Objeto composto repetido continua sendo uma proposição atômica");
+equal(compoundObject.mapping.length, 1, "Objetos unidos por e não são separados sem contexto");
+
+const normalizedPhrase = compileArgument(["Eu estudo"], "EU ESTUDO");
+equal(normalizedPhrase.isValid, true, "Maiúsculas e minúsculas não criam proposições diferentes");
+equal(normalizedPhrase.mapping.length, 1, "Normalização de caixa preserva uma única proposição");
+
+const conditionalCoordination = compileArgument(
+  ["Eu estudo", "Eu trabalho"],
+  "Se eu estudo, então eu estudo e trabalho",
+);
+equal(conditionalCoordination.isValid, true, "Coordenação também é reutilizada dentro da condicional");
+equal(conditionalCoordination.mapping.length, 2, "Condicional coordenada não cria proposições extras");
+
+throwsLogic(
+  () => compileArgument(["João é mortal", "Sócrates é mortal"], "João é mortal e mortal"),
+  "syntax",
+  "Referência elíptica com mais de um antecedente é recusada",
+  "Referência ambígua",
+);
+throwsLogic(
+  () => compileArgument(["Ele estuda", "Ela estuda"], "Estuda"),
+  "syntax",
+  "Sujeito omitido com duas referências possíveis é recusado",
+  "Referência ambígua",
+);
+throwsLogic(
+  () => compileArgument(["Eu estudo"], "Eu estudo, trabalho e canto"),
+  "syntax",
+  "Enumeração parcialmente desconhecida pede frases completas",
+  "Enumeração ambígua",
+);
 
 const invalidLexical = ["", "   ", "P + Q", "P @ Q", "P = Q", "P # Q", "P => Q", "P;Q", "P₂", "<script>"];
 for (const source of invalidLexical) throwsLogic(() => lex(source), "lexical", `Erro léxico: ${source}`);
